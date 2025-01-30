@@ -1,6 +1,6 @@
 🧙 5e Turn Taker Assistant
 
-A streamlined initiative tracker designed for in-person 5e sessions where the game and maps are displayed on a screen or TV. This tool allows all players to see turn order, (Optional) HP status, and combat progression at a glance, ensuring a smooth and organized gameplay experience.<br>
+A streamlined initiative tracker designed for in-person 5e sessions where the game and maps are displayed on a screen or TV. This tool allows all players to see turn order, (optional) HP status, and combat progression at a glance, ensuring a smooth and organized gameplay experience.<br>
 
 Features:<br>
 ✔️ Add characters with custom or preselected names<br>
