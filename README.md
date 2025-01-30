@@ -12,4 +12,12 @@ Features:<br>
 ✔️ Color-coded HP bar (Green, Orange, Red, Black)<br>
 ✔️ Remove characters when needed<br><br>
 
-Made for game masters running in-person sessions with digital displays.
+Made for game masters running in-person sessions with digital displays.<br><br>
+
+
+Requirements<br>
+- Pillow package<br><br>
+
+
+
+Tested with Python 3.10.<br>
