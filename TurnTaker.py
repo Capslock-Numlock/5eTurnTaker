@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk  # For handling the D20 icon
 import random  # For rolling initiative
 
+
 class TurnTaker:
     def __init__(self, root):
         self.root = root
@@ -31,7 +32,7 @@ class TurnTaker:
         self.initiative_entry.grid(row=0, column=3)
 
         # Load the D20 icon and create a button
-        self.d20_image = Image.open("d20.png").resize((30, 34))  # Adjust size as needed
+        self.d20_image = Image.open("d20.png").resize((30, 34))  # D20 icon is 30x34 pixels
         self.d20_icon = ImageTk.PhotoImage(self.d20_image)
         self.roll_initiative_button = tk.Button(root, image=self.d20_icon, command=self.roll_initiative)
         self.roll_initiative_button.grid(row=0, column=4)
@@ -78,12 +79,19 @@ class TurnTaker:
             except ValueError:
                 return  # Ignore invalid HP input
 
-        self.characters.append({"name": name, "initiative": initiative, "hp": max_hp, "max_hp": max_hp})
+        # Add a new character with an empty list for statuses
+        self.characters.append({
+            "name": name,
+            "initiative": initiative,
+            "hp": max_hp,
+            "max_hp": max_hp,
+            "statuses": []
+        })
         self.characters.sort(key=lambda x: x["initiative"], reverse=True)
         self.update_list()
 
-
     def update_list(self):
+        # Remove all widgets from rows > 1
         for widget in self.root.grid_slaves():
             if int(widget.grid_info()["row"]) > 1:
                 widget.grid_forget()
@@ -91,16 +99,16 @@ class TurnTaker:
         for i, character in enumerate(self.characters):
             bg_color = "yellow" if i == self.current_turn else "white"
 
+            # Name and Initiative
             name_label = tk.Label(self.root, text=character["name"], bg=bg_color)
             name_label.grid(row=i + 2, column=0, sticky="w")
 
             initiative_label = tk.Label(self.root, text=character["initiative"], bg=bg_color)
             initiative_label.grid(row=i + 2, column=1, sticky="w")
 
+            # HP display and controls (if HP is provided)
             if character["hp"] is not None:
-                hp_label = tk.Label(
-                    self.root, text=f"{character['hp']}/{character['max_hp']}", bg=bg_color
-                )
+                hp_label = tk.Label(self.root, text=f"{character['hp']}/{character['max_hp']}", bg=bg_color)
                 hp_label.grid(row=i + 2, column=2, sticky="w")
 
                 hp_percentage = int((character["hp"] / character["max_hp"]) * 100) if character["max_hp"] else 0
@@ -131,6 +139,25 @@ class TurnTaker:
             remove_button = tk.Button(self.root, text="Remove", command=lambda i=i: self.remove_character(i))
             remove_button.grid(row=i + 2, column=7)
 
+            # Statuses display (if any)
+            status_frame = tk.Frame(self.root, bg=bg_color)
+            status_frame.grid(row=i + 2, column=8, sticky="w")
+            statuses = character.get("statuses", [])
+            for j, status in enumerate(statuses):
+                status_text = f"{status['name']} ({status['turns']})"
+                status_label = tk.Label(status_frame, text=status_text, bg=bg_color)
+                status_label.grid(row=j, column=0, sticky="w")
+                remove_status_button = tk.Button(
+                    status_frame,
+                    text="Remove",
+                    command=lambda i=i, j=j: self.remove_status(i, j)
+                )
+                remove_status_button.grid(row=j, column=1)
+
+            # Button to add a status to this character
+            add_status_button = tk.Button(self.root, text="Add Status", command=lambda i=i: self.add_status_popup(i))
+            add_status_button.grid(row=i + 2, column=9)
+
     def remove_character(self, index):
         self.characters.pop(index)
         if self.current_turn >= len(self.characters):
@@ -154,7 +181,49 @@ class TurnTaker:
         except ValueError:
             pass  # Ignore invalid input
 
+    def add_status_popup(self, index):
+        """Open a popup to add a status (with a turn timer) to the character at the given index."""
+        popup = tk.Toplevel(self.root)
+        popup.title("Add Status")
+        tk.Label(popup, text="Status Name:").grid(row=0, column=0)
+        status_name_entry = tk.Entry(popup)
+        status_name_entry.grid(row=0, column=1)
+        tk.Label(popup, text="Turns:").grid(row=1, column=0)
+        turns_entry = tk.Entry(popup)
+        turns_entry.grid(row=1, column=1)
+
+        def add_status_action():
+            status_name = status_name_entry.get()
+            try:
+                turns = int(turns_entry.get())
+            except ValueError:
+                popup.destroy()
+                return
+            if status_name and turns > 0:
+                self.characters[index]["statuses"].append({"name": status_name, "turns": turns})
+            popup.destroy()
+            self.update_list()
+
+        add_button = tk.Button(popup, text="Add", command=add_status_action)
+        add_button.grid(row=2, column=0, columnspan=2)
+
+    def remove_status(self, char_index, status_index):
+        """Remove a status from the specified character."""
+        if "statuses" in self.characters[char_index]:
+            del self.characters[char_index]["statuses"][status_index]
+        self.update_list()
+
     def next_turn(self):
+        # Update statuses for the current character by decrementing their turn counters.
+        if self.characters:
+            current_char = self.characters[self.current_turn]
+            if "statuses" in current_char:
+                new_statuses = []
+                for status in current_char["statuses"]:
+                    status["turns"] -= 1
+                    if status["turns"] > 0:
+                        new_statuses.append(status)
+                current_char["statuses"] = new_statuses
         self.current_turn += 1
         if self.current_turn >= len(self.characters):
             self.current_turn = 0
@@ -172,7 +241,6 @@ class TurnTaker:
     def setup_styles(self):
         style = ttk.Style()
         style.theme_use("default")
-
         style.configure("Green.Horizontal.TProgressbar", background="green")
         style.configure("Orange.Horizontal.TProgressbar", background="orange")
         style.configure("Red.Horizontal.TProgressbar", background="red")
