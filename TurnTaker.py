@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk  # For handling the D20 icon
-import random  # For rolling initiative
+import random
 
 
 class TurnTaker:
@@ -31,9 +30,8 @@ class TurnTaker:
         self.initiative_entry = tk.Entry(root)
         self.initiative_entry.grid(row=0, column=3)
 
-        # Load the D20 icon and create a button
-        self.d20_image = Image.open("d20.png").resize((30, 34))  # D20 icon is 30x34 pixels
-        self.d20_icon = ImageTk.PhotoImage(self.d20_image)
+        # Load the D20 icon using tkinter PhotoImage (d20.png should be 30x34 pixels)
+        self.d20_icon = tk.PhotoImage(file="d20.png")
         self.roll_initiative_button = tk.Button(root, image=self.d20_icon, command=self.roll_initiative)
         self.roll_initiative_button.grid(row=0, column=4)
 
