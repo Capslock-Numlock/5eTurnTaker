@@ -7,4 +7,5 @@ Features:<br> ✔️ Add characters with custom or preselected names<br> ✔️ 
 Made for Game Masters running in-person sessions with digital displays.<br><br>
 
 
-Tested with Python 3.10 & PyCharm.<br>
+Requirements:<br>
+<a href="https://www.python.org/downloads/release/python-31011/">Python 3.10</a><br>
