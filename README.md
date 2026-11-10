@@ -1,11 +1,36 @@
-🧙 <b>5e Turn Taker Assistant V0.3</b>
+# 🧙 5e Turn Taker Assistant v0.3
 
-A streamlined initiative tracker designed for in-person 5e sessions where the game and maps are displayed on a screen or TV. This tool allows all players to see turn order, (optional) HP status, status effects with turn timers, and combat progression at a glance, ensuring a smooth and organized gameplay experience.<br>
+A streamlined initiative tracker for in-person 5e sessions where the game and maps are shown on a screen or TV. Everyone at the table can see the turn order, (optional) HP status, status effects with turn timers, and combat progress at a glance.
 
-Features:<br> ✔️ Add characters with custom or preselected names<br> ✔️ Roll initiative using a D20 button<br> ✔️ Auto-sort characters by initiative order<br> ✔️ Highlight the active turn in yellow<br> ✔️ Track total rounds of combat<br> ✔️ Adjust HP manually or by percentage<br> ✔️ (Optional) Color-coded HP bar (Green, Orange, Red, Black)<br> ✔️ Remove characters when needed<br> 🆕 Update V0.2 Add statuses (e.g., spells or conditions) with turn timers to characters and remove them automatically when expired<br> 🆕 Update V0.3 Resigned from the PIL package<br><br>
+Made for Game Masters running in-person sessions with digital displays.
 
-Made for Game Masters running in-person sessions with digital displays.<br><br>
+## Features
 
+- ✔️ Add characters with custom or preselected names
+- ✔️ Roll initiative with a D20 button
+- ✔️ Auto-sort characters by initiative order
+- ✔️ Highlight the active turn in yellow
+- ✔️ Track total rounds of combat
+- ✔️ Adjust HP manually or by percentage
+- ✔️ (Optional) Color-coded HP bar (green, orange, red, black)
+- ✔️ Remove characters when needed
+- 🆕 **v0.2:** Add statuses (e.g. spells or conditions) with turn timers to characters; they are removed automatically when they expire
+- 🆕 **v0.3:** No longer depends on the PIL (Pillow) package, so the app uses only the Python standard library
 
-Requirements:<br>
-<a href="https://www.python.org/downloads/release/python-31011/">Python 3.10</a><br>
+## Requirements
+
+- [Python 3.10](https://www.python.org/downloads/release/python-31011/) (with Tkinter, which is included in the standard Windows and macOS installers)
+
+No `pip install` needed.
+
+## Running
+
+Keep `TurnTaker.py` and `d20.png` in the same folder (the script loads the icon from the current directory), then run from that folder:
+
+```
+python TurnTaker.py
+```
+
+## License
+
+[MIT](LICENSE)
