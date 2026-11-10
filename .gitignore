@@ -1,0 +1,14 @@
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# PyInstaller
+build/
+dist/
+*.spec
