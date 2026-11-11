@@ -10,7 +10,7 @@ Run it on the DM's screen. Show a spoiler-free view to the table.
 ![Offline](https://img.shields.io/badge/works-offline-5c9c5a?style=flat-square)
 ![License: MIT](https://img.shields.io/badge/license-MIT-6f9bb8?style=flat-square)
 
-<img src="docs/dm-view.png" alt="DM view of the combat tracker" width="900">
+<img src="docs/theme-tomb.png" alt="DM view of the combat tracker" width="900">
 
 </div>
 
@@ -20,7 +20,7 @@ Run it on the DM's screen. Show a spoiler-free view to the table.
 
 Running combat at a table with a projector or TV means juggling initiative, HP, conditions, concentration and timers, while the players must not see AC, hidden monsters or DM notes. Turn Taker keeps all the bookkeeping on your screen and gives the table a clean, read-only window.
 
-Built by a DM running *Tomb of Annihilation* with Foundry VTT on a laptop and projector, but it works for any 2014-rules 5e game.
+Built by a DM running *Tomb of Annihilation* with Foundry VTT on a laptop and projector, but it works for any 2014-rules 5e game, with a theme for the campaign you are running.
 
 ## Quick start
 
@@ -31,6 +31,26 @@ Built by a DM running *Tomb of Annihilation* with Foundry VTT on a laptop and pr
 No installation, no build step, no server, no account. Fonts load from Google Fonts when online and fall back to system fonts offline.
 
 > **Tip:** double-click anywhere in the player window for full screen.
+
+## Themes
+
+Pick a theme from the dropdown next to the title. The choice is saved, and the player window follows it automatically. The app name, subtitle, browser-tab title and icon change with the theme.
+
+| Theme | App name | Look |
+| --- | --- | --- |
+| **Tomb of Annihilation** (default) | Tomb Tracker | Jungle green and gold |
+| **Descent into Avernus** | Hellfire Tracker | Lava and embers, with a slow hellfire glow along the bottom edge |
+| **Curse of Strahd** | Barovia Tracker | Dark purple with gothic lettering and a drifting-fog vignette |
+| **Classic 5e** | 5e Turn Taker | Neutral brown leather and bronze |
+
+<div align="center">
+<img src="docs/theme-avernus.png" alt="Avernus theme" width="440">
+<img src="docs/theme-strahd.png" alt="Curse of Strahd theme" width="440">
+<img src="docs/theme-classic.png" alt="Classic 5e theme" width="440">
+<img src="docs/theme-tomb.png" alt="Tomb of Annihilation theme" width="440">
+</div>
+
+HP colors (green, amber, red) stay the same in every theme so health is always readable at a glance. Animations respect the system "reduce motion" setting.
 
 ## Features
 
@@ -62,10 +82,11 @@ No installation, no build step, no server, no account. Fonts load from Google Fo
 - Separate window with **no** AC, notes, lair actions, hidden monsters or condition timers
 - HP as a health bar with Healthy / Injured / Bloodied / Critical labels, or real numbers (separate toggles for PCs and monsters)
 - Cards layout for a full screen, or a slim **ribbon** you can dock along the edge of the map
+- Matches the DM's chosen theme
 - "Next up" preview, current-turn flash, optional chime and visible turn timer
 
 <div align="center">
-<img src="docs/player-view.png" alt="Player-safe view" width="600">
+<img src="docs/player-strahd.png" alt="Player-safe view (Curse of Strahd theme)" width="600">
 </div>
 
 ## Keyboard shortcuts
