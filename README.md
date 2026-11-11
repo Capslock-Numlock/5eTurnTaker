@@ -5,6 +5,8 @@
 **A fast, single-file combat tracker for in-person D&D 5e (2014 rules).**
 Run it on the DM's screen. Show a spoiler-free view to the table.
 
+[![Live app](https://img.shields.io/badge/%E2%96%B6%20open-live%20app-c9a227?style=for-the-badge)](https://capslock-numlock.github.io/5eTurnTaker/)
+
 ![No install](https://img.shields.io/badge/install-none-2c472c?style=flat-square)
 ![Single file](https://img.shields.io/badge/single%20file-HTML%2FCSS%2FJS-c9a227?style=flat-square)
 ![Offline](https://img.shields.io/badge/works-offline-5c9c5a?style=flat-square)
@@ -24,11 +26,14 @@ Built by a DM running *Tomb of Annihilation* with Foundry VTT on a laptop and pr
 
 ## Quick start
 
-1. Download [`index.html`](index.html) (or clone this repo).
-2. Double-click it. It opens in Edge, Chrome or any modern browser.
-3. Add combatants, press **Start Combat**, then **Open ↗** in the Player View bar and drag that window to the projector.
+**Fastest:** open the live app at **https://capslock-numlock.github.io/5eTurnTaker/** and bookmark it. Nothing to install.
 
-No installation, no build step, no server, no account. Fonts load from Google Fonts when online and fall back to system fonts offline.
+**Offline, for game night:** download [`index.html`](index.html) once and keep it on your laptop.
+
+1. Double-click the file. It opens in Edge, Chrome or any modern browser.
+2. Add combatants (or load your party and the Bestiary), press **Start Combat**, then **Open ↗** in the Player View bar and drag that window to the projector.
+
+No installation, no build step, no account. Fonts load from Google Fonts when online and fall back to system fonts offline.
 
 > **Tip:** double-click anywhere in the player window for full screen.
 
