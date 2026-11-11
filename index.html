@@ -6,7 +6,7 @@
 <title>Tomb Tracker — Combat Manager</title>
 <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%BA%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=IM+Fell+English+SC&family=Mate+SC&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=IM+Fell+English+SC&family=Mate+SC&family=Marcellus+SC&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --hp-good:#5c9c5a; --hp-mid:#d9a82e; --hp-low:#d95050;
@@ -61,7 +61,21 @@
     --pbtn1:#7a4a2a; --pbtn2:#5c351c; --pborder:#a8703e; --pbtn1h:#8a5532; --pbtn2h:#6a3d22;
     --cond-bg:#3a2a14; --cond-bd:#6a4c22; --cond-fg:#ecc98a; --cond-hover:#4a3618; --live-bg:#2a2a1a;
   }
+  /* ---- Theme: Icewind Dale / Rime of the Frostmaiden (ice, aurora, snow) ---- */
+  :root[data-theme="icewind"]{
+    --font-head:'Marcellus SC','Cinzel',Georgia,serif;
+    --void:#07111a; --panel:#0e1c2a; --panel-2:#142a3d; --line:#2c4a63;
+    --ivory:#e8f3fb; --ivory-dim:#9db8cc;
+    --gold:#5cc8f0; --gold-bright:#aee8ff; --gold-rgb:92,200,240; --gold-b-rgb:174,232,255;
+    --red:#c0455a; --red-bright:#ec5f72; --green:#66b09a; --steel:#8aa9e0;
+    --olive:#a8b8a0; --purple:#a08ae0; --amber:#e8c068;
+    --inset:#0a1722; --inset2:#060d14; --hover:#1c3a52; --glyph1:#1f4560; --glyph2:#0a1722;
+    --bg1:#123852; --bg2:#0a1c2c;
+    --pbtn1:#2a7ca8; --pbtn2:#1d5a80; --pborder:#4aa8d8; --pbtn1h:#3590bd; --pbtn2h:#246a94;
+    --cond-bg:#1c3a4a; --cond-bd:#3a6a85; --cond-fg:#bde8ff; --cond-hover:#234a5e; --live-bg:#0f2a36;
+  }
   /* ambient theme effects (decorative, behind everything) */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:0;transition:opacity .6s ease;}
   body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:0;transition:opacity .6s ease;}
   :root[data-theme="avernus"] body::after{opacity:1;
     background:radial-gradient(ellipse 80% 40% at 50% 112%,rgba(255,90,20,.34),transparent 70%),
@@ -74,7 +88,25 @@
     animation:fogDrift 18s ease-in-out infinite alternate;}
   @keyframes lavaPulse{0%,100%{opacity:.75;}50%{opacity:1;}}
   @keyframes fogDrift{0%{transform:translateX(-1.5%);}100%{transform:translateX(1.5%);}}
-  @media (prefers-reduced-motion:reduce){body::after{animation:none !important;}}
+  :root[data-theme="icewind"] body::before{opacity:1;inset:-10% -10% 35% -10%;
+    background:linear-gradient(115deg,transparent 8%,rgba(60,255,170,.11) 28%,rgba(80,180,255,.13) 50%,rgba(170,110,255,.11) 72%,transparent 92%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,transparent 75%);mask-image:linear-gradient(to bottom,#000,transparent 75%);
+    animation:auroraShift 16s ease-in-out infinite alternate;}
+  :root[data-theme="icewind"] body::after{opacity:1;
+    background-image:radial-gradient(circle,rgba(255,255,255,.55) 0 1.2px,transparent 2px),radial-gradient(circle,rgba(255,255,255,.4) 0 1px,transparent 1.8px),radial-gradient(circle,rgba(255,255,255,.3) 0 .8px,transparent 1.5px);
+    background-size:170px 170px,260px 260px,110px 110px;background-position:0 0,40px 90px,70px 30px;
+    animation:snowFall 24s linear infinite;}
+  @keyframes snowFall{to{background-position:20px 170px,50px 350px,80px 140px;}}
+  @keyframes auroraShift{0%{transform:translateX(-4%);opacity:.65;}100%{transform:translateX(4%);opacity:1;}}
+  @media (prefers-reduced-motion:reduce){body::after,body::before{animation:none !important;}}
+  /* dice roller */
+  .roll-in{width:118px;font-size:11.5px;padding:3px 6px;}
+  .dice-big{font-family:var(--font-head);font-size:60px;text-align:center;color:var(--gold-bright);line-height:1.1;margin-top:12px;}
+  .dice-big.crit{color:#7fe08a;} .dice-big.fumble{color:var(--red-bright);}
+  .dice-sub{text-align:center;font-size:12.5px;color:var(--ivory-dim);margin-bottom:8px;min-height:18px;}
+  .nat20{color:#7fe08a;} .nat1{color:var(--red-bright);}
+  .dice-sub s,.log-entry s{opacity:.5;}
+  .dice-hist .log-entry{cursor:pointer;} .dice-hist .log-entry:hover{color:var(--ivory);border-left-color:var(--gold);}
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
@@ -410,7 +442,9 @@
     <div class="opts-body">
       <label class="tog"><input type="checkbox" id="optSkip"> Skip defeated monsters &amp; dead PCs</label>
       <label class="tog"><input type="checkbox" id="optFlash"> Flash player screen on turn change</label>
-      <label class="tog"><input type="checkbox" id="optChime"> Chime on turn change (plays from this window)</label>
+      <label class="tog"><input type="checkbox" id="optChime"> Sound effects: turn chime, dice, timer (plays from this window)</label>
+      <label class="tog">Volume <input type="range" id="optVol" min="0" max="100" step="5" style="width:110px;padding:0"></label>
+      <button class="btn small" data-act="testSound">▶ Test sound</button>
       <label class="tog"><input type="checkbox" id="optShowTimer"> Show turn timer to players</label>
       <label class="tog">Turn timer <input type="number" id="optTimerSec" min="0" step="5"> sec (0 = off)</label>
       <button class="btn small" data-act="resetSession">Reset session clock</button>
@@ -441,6 +475,7 @@
         <button class="tab" data-act="tab" data-tab="bestiary">Bestiary</button>
         <button class="tab" data-act="tab" data-tab="enc">Encounter</button>
         <button class="tab" data-act="tab" data-tab="log">Log</button>
+        <button class="tab" data-act="tab" data-tab="dice">Dice</button>
       </div>
 
       <div class="pane on" id="pane-add">
@@ -480,6 +515,7 @@
       <div class="pane" id="pane-bestiary"></div>
       <div class="pane" id="pane-enc"></div>
       <div class="pane" id="pane-log"></div>
+      <div class="pane" id="pane-dice"></div>
     </div>
   </div>
 
@@ -529,7 +565,8 @@ const THEMES = {
   tomb:{label:'Tomb of Annihilation', title:'TOMB TRACKER', sub:'Combat manager — Tomb of Annihilation', icon:'\u{1F3FA}'},
   avernus:{label:'Descent into Avernus', title:'HELLFIRE TRACKER', sub:'Combat manager — Descent into Avernus', icon:'\u{1F525}'},
   strahd:{label:'Curse of Strahd', title:'BAROVIA TRACKER', sub:'Combat manager — Curse of Strahd', icon:'\u{1F987}'},
-  classic:{label:'Classic 5e', title:'5E TURN TAKER', sub:'Combat manager — Dungeons & Dragons 5th Edition', icon:'\u{1F3B2}'}
+  classic:{label:'Classic 5e', title:'5E TURN TAKER', sub:'Combat manager — Dungeons & Dragons 5th Edition', icon:'\u{1F3B2}'},
+  icewind:{label:'Icewind Dale', title:'ICEWIND TRACKER', sub:'Combat manager — Rime of the Frostmaiden', icon:'❄️'}
 };
 function applyTheme(id, isPlayer){
   if(!THEMES[id]) id = 'tomb'; const t = THEMES[id];
@@ -609,6 +646,39 @@ function parseRch(str){
 }
 const rchStr = r => (r || []).map(x => x.name + ' ' + x.min).join(', ');
 
+/* ---------- dice expressions: 2d6+3, d20+5 adv, 4d6kh3, d% ---------- */
+function rollExpr(raw, mode){
+  mode = mode || 'normal';
+  let s = String(raw || '').toLowerCase().replace(/[−–]/g, '-').replace(/\s+/g, '').replace(/d%/g, 'd100');
+  const mm0 = s.match(/(advantage|disadvantage|adv|dis)$/);
+  if(mm0){ mode = mm0[1][0] === 'a' ? 'adv' : 'dis'; s = s.slice(0, s.length - mm0[1].length); }
+  if(!s) return {error:'Type something like d20+5, 2d6+3 or 4d6kh3'};
+  const toks = s.match(/[+-]?[^+-]+/g);
+  if(!toks || toks.join('') !== s) return {error:'Couldn\'t read “' + String(raw).trim() + '”'};
+  let total = 0, d20terms = 0, keptD20 = null, modeUsed = false; const segs = [];
+  for(let i = 0; i < toks.length; i++){
+    let tok = toks[i], sign = 1;
+    if(tok[0] === '+') tok = tok.slice(1); else if(tok[0] === '-'){ sign = -1; tok = tok.slice(1); }
+    if(/^\d+$/.test(tok)){ const v = +tok; total += sign * v; segs.push({sign, html:String(v), text:String(v)}); continue; }
+    const m = tok.match(/^(\d*)d(\d+)(?:k([hl]?)(\d+))?$/);
+    if(!m) return {error:'Couldn\'t read “' + tok + '”'};
+    let n = m[1] ? +m[1] : 1; const sides = +m[2]; let kt = m[3] === 'l' ? 'l' : 'h', k = m[4] ? +m[4] : n;
+    if(mode !== 'normal' && sides === 20 && n === 1 && !m[4] && !modeUsed){ n = 2; k = 1; kt = mode === 'adv' ? 'h' : 'l'; modeUsed = true; }
+    if(n < 1 || n > 100 || sides < 2 || sides > 1000 || k < 1 || k > n) return {error:'That dice term is out of range: ' + tok};
+    const rolls = Array.from({length:n}, () => d(sides)), order = rolls.map((v, i) => i).sort((a, b) => kt === 'h' ? rolls[b] - rolls[a] : rolls[a] - rolls[b]);
+    const keep = new Set(order.slice(0, k)); let sum = 0; keep.forEach(i => { sum += rolls[i]; });
+    total += sign * sum;
+    const label = n + 'd' + sides + (k < n ? 'k' + kt + k : '');
+    const cls = v => sides === 20 ? (v === 20 ? ' class="nat20"' : v === 1 ? ' class="nat1"' : '') : '';
+    segs.push({sign, html:label + ' [' + rolls.map((v, i) => keep.has(i) ? '<b' + cls(v) + '>' + v + '</b>' : '<s>' + v + '</s>').join(', ') + ']',
+      text:label + ' [' + rolls.map((v, i) => keep.has(i) ? v : '(' + v + ')').join(', ') + ']'});
+    if(sides === 20){ d20terms++; keptD20 = k === 1 ? rolls[order[0]] : null; }
+  }
+  const join = key => segs.map((g, i) => (i === 0 ? (g.sign < 0 ? '−' : '') : (g.sign < 0 ? ' − ' : ' + ')) + g[key]).join('');
+  const nat = d20terms === 1 && keptD20 != null ? (keptD20 === 20 ? '20' : keptD20 === 1 ? '1' : null) : null;
+  return {total, html:join('html'), text:join('text'), nat, expr:s + (modeUsed ? (mode === 'adv' ? ' (advantage)' : ' (disadvantage)') : ''), raw:String(raw).trim(), mode};
+}
+
 /* =====================================================================
    State model
    ===================================================================== */
@@ -617,7 +687,7 @@ function freshState(){
     v:2, nextId:1, round:1, started:false, currentId:null, turnSeq:0,
     combatants:[], log:[], fights:[], xpEarned:0,
     combatStartedAt:null, turnStartedAt:null, turnPausedAt:null,
-    settings:{theme:'tomb', pvPcNums:true, pvMonNums:false, pvLayout:'cards', flash:true, chime:true, showTimer:true, turnTimerSec:0, skipDefeated:true, partySize:4, partyLevel:1},
+    settings:{theme:'tomb', volume:70, pvPcNums:true, pvMonNums:false, pvLayout:'cards', flash:true, chime:true, showTimer:true, turnTimerSec:0, skipDefeated:true, partySize:4, partyLevel:1},
     session:{start:Date.now(), last:Date.now()}
   };
 }
@@ -764,7 +834,8 @@ let state = freshState(), roster = [], templates = [];
 const undoStack = [], redoStack = [];
 const selected = new Set(), bulkModes = {};
 let activeTab = 'add', editingRoster = null, editingTpl = null, editingNote = null;
-let playerWin = null, dragId = null, buzzedSeq = -1, actx = null, hadSaved = false;
+let playerWin = null, dragId = null, buzzedSeq = -1, hadSaved = false;
+const diceHistory = []; let lastRoll = null;
 
 /* ---------- persistence ---------- */
 function setSaveInd(ok){
@@ -826,19 +897,92 @@ function notify(html, o){
 }
 function openModal(html){ $('#modalBody').innerHTML = html; $('#modal').classList.add('open'); }
 function closeModal(){ $('#modal').classList.remove('open'); }
-function chime(kind){
-  if(!state.settings.chime) return;
-  try{
-    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
-    actx = actx || new AC(); if(actx.state === 'suspended') actx.resume();
-    const t0 = actx.currentTime, seq = kind === 'buzz' ? [[220, 0], [185, .17]] : [[660, 0], [880, .11]];
-    seq.forEach(p => {
-      const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = p[0];
-      g.gain.setValueAtTime(.0001, t0 + p[1]); g.gain.exponentialRampToValueAtTime(.07, t0 + p[1] + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + p[1] + .22);
-      o.connect(g); g.connect(actx.destination); o.start(t0 + p[1]); o.stop(t0 + p[1] + .25);
-    });
-  }catch(e){}
-}
+/* ---------- sound engine: every theme has its own synthesized voice ---------- */
+const SFX = (() => {
+  let ctx = null, master = null, noiseBuf = null;
+  function ensure(){
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null;
+    if(!ctx){
+      ctx = new AC(); master = ctx.createGain(); master.connect(ctx.destination);
+      const len = ctx.sampleRate; noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const ch = noiseBuf.getChannelData(0); for(let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    }
+    if(ctx.state === 'suspended') ctx.resume();
+    master.gain.value = clamp(num(state.settings.volume, 70), 0, 100) / 100 * 0.9;
+    return ctx;
+  }
+  function tone(o){
+    const osc = ctx.createOscillator(), g = ctx.createGain(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(o.f, o.t);
+    if(o.slide) osc.frequency.exponentialRampToValueAtTime(o.slide, o.t + o.dur);
+    const a = o.a || .01, peak = Math.max(.0002, o.g || .2);
+    g.gain.setValueAtTime(.0001, o.t); g.gain.exponentialRampToValueAtTime(peak, o.t + a); g.gain.exponentialRampToValueAtTime(.0001, o.t + o.dur);
+    let node = osc; if(o.lp){ const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; osc.connect(f); node = f; }
+    node.connect(g); g.connect(master); osc.start(o.t); osc.stop(o.t + o.dur + .05);
+  }
+  function noise(o){
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = o.type || 'bandpass'; f.frequency.setValueAtTime(o.f, o.t);
+    if(o.sweep) f.frequency.exponentialRampToValueAtTime(o.sweep, o.t + o.dur); f.Q.value = o.q || 1;
+    const g = ctx.createGain(); g.gain.setValueAtTime(.0001, o.t); g.gain.exponentialRampToValueAtTime(Math.max(.0002, o.g || .1), o.t + (o.a || .005)); g.gain.exponentialRampToValueAtTime(.0001, o.t + o.dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(o.t); src.stop(o.t + o.dur + .05);
+  }
+  const bell = (f, t, dur, g, ratios) => (ratios || [1, 2.4, 3, 4.2, 6.1]).forEach((r, i) => tone({f:f * r, t, dur:dur / (1 + i * .55), g:g / (1 + i * 1.3), a:.004}));
+  const clatter = (t, f, n, g) => { for(let i = 0; i < n; i++) noise({t:t + i * .05 + Math.random() * .025, dur:.055, g:g || .13, type:'bandpass', f:f * (.75 + Math.random() * .6), q:3}); };
+  const run = (t, notes, step, mk) => notes.forEach((f, i) => mk(f, t + i * step, i));
+
+  const VOICES = {
+    /* jungle temple: wooden marimba, stone knocks, skin drum */
+    tomb:{
+      turn:t => { run(t, [392, 587], .13, (f, tt) => tone({type:'triangle', f, t:tt, dur:.4, g:.24, a:.004})); tone({f:98, t, dur:.25, g:.18, slide:70}); },
+      buzz:t => { tone({f:150, t, dur:.4, g:.45, slide:55}); noise({t, dur:.12, g:.14, type:'lowpass', f:320}); tone({f:150, t:t + .28, dur:.4, g:.4, slide:55}); },
+      roll:t => clatter(t, 1900, 4),
+      crit:t => run(t, [523, 659, 784, 1047], .09, (f, tt) => tone({type:'triangle', f, t:tt, dur:.45, g:.22, a:.004})),
+      fumble:t => { tone({f:196, t, dur:.6, g:.3, slide:90}); noise({t, dur:.15, g:.1, type:'lowpass', f:260}); }
+    },
+    /* Avernus: infernal horns, tritones, crackling fire */
+    avernus:{
+      turn:t => { [110, 155.6].forEach(f => tone({type:'sawtooth', f, t, dur:.55, g:.14, a:.05, lp:700})); noise({t, dur:.4, g:.07, type:'highpass', f:3500, q:.7}); },
+      buzz:t => { tone({type:'sawtooth', f:82, t, dur:.8, g:.28, a:.04, slide:46, lp:420}); noise({t, dur:.7, g:.12, type:'lowpass', f:240, sweep:90}); },
+      roll:t => { clatter(t, 950, 4, .15); tone({f:70, t, dur:.18, g:.2, slide:45}); },
+      crit:t => run(t, [220, 277, 330, 440], .09, (f, tt) => tone({type:'sawtooth', f, t:tt, dur:.5, g:.13, a:.02, lp:1500})),
+      fumble:t => { tone({type:'sawtooth', f:233, t, dur:.9, g:.22, slide:58, lp:600}); noise({t, dur:.8, g:.09, type:'lowpass', f:500, sweep:120}); }
+    },
+    /* Barovia: tolling church bell, harpsichord pluck, organ chord */
+    strahd:{
+      turn:t => bell(330, t, 1.8, .22, [1, 2.4, 3, 4.2, 6.1]),
+      buzz:t => { bell(196, t, 1.6, .3); bell(185, t + .6, 1.8, .26); },
+      roll:t => run(t, [659, 523, 784, 440].slice(0, 3), .075, (f, tt) => tone({type:'triangle', f, t:tt, dur:.14, g:.2, a:.003})),
+      crit:t => [262, 311, 392, 523].forEach(f => { tone({f, t, dur:1.4, g:.12, a:.12}); tone({type:'triangle', f:f / 2, t, dur:1.4, g:.07, a:.12}); }),
+      fumble:t => { bell(98, t, 2, .32); bell(139, t + .05, 1.6, .16); }
+    },
+    /* classic tavern: bright ding, wooden dice, brass flourish */
+    classic:{
+      turn:t => { tone({type:'triangle', f:880, t, dur:.55, g:.24, a:.003}); tone({f:1760, t, dur:.3, g:.07, a:.003}); },
+      buzz:t => { tone({type:'triangle', f:196, t, dur:.28, g:.3}); tone({type:'triangle', f:147, t:t + .3, dur:.4, g:.3}); },
+      roll:t => { clatter(t, 2300, 5); tone({f:180, t:t + .26, dur:.1, g:.15, slide:120}); },
+      crit:t => run(t, [523, 659, 784, 1047], .1, (f, tt, i) => tone({type:'triangle', f, t:tt, dur:i === 3 ? .8 : .3, g:.22, a:.005})),
+      fumble:t => { tone({type:'sawtooth', f:262, t, dur:.45, g:.18, slide:233, lp:800}); tone({type:'sawtooth', f:233, t:t + .45, dur:.9, g:.18, slide:175, lp:800}); }
+    },
+    /* Icewind Dale: glass pings, ice cracks, howling wind */
+    icewind:{
+      turn:t => { bell(1568, t, 1.1, .11, [1, 2.01, 3.02, 4.2]); tone({f:2093, t:t + .09, dur:.7, g:.07}); },
+      buzz:t => { noise({t, dur:1.1, g:.28, type:'bandpass', f:380, sweep:1500, q:.7, a:.25}); noise({t, dur:1, g:.12, type:'lowpass', f:220}); },
+      roll:t => { for(let i = 0; i < 3; i++){ noise({t:t + i * .06, dur:.04, g:.13, type:'highpass', f:3200}); tone({f:2600, t:t + i * .06, dur:.08, g:.06, slide:1300}); } },
+      crit:t => run(t, [1047, 1319, 1568, 2093], .08, (f, tt) => bell(f, tt, .9, .1, [1, 2.01, 3.02])),
+      fumble:t => { noise({t, dur:1, g:.2, type:'lowpass', f:1300, sweep:180}); tone({f:330, t, dur:.9, g:.18, slide:110}); }
+    }
+  };
+  return function play(kind, force){
+    if(!force && !state.settings.chime) return;
+    try{
+      if(!ensure()) return;
+      const v = VOICES[state.settings.theme] || VOICES.tomb;
+      (v[kind] || v.turn)(ctx.currentTime + .02);
+    }catch(e){}
+  };
+})();
+const sfx = SFX;
+const chime = kind => SFX(kind === 'buzz' ? 'buzz' : 'turn');
 
 /* ---------- lookups ---------- */
 const findById = id => state.combatants.find(c => c.id === id) || null;
@@ -1085,6 +1229,7 @@ function render(){
     renderHeader(); renderList(); renderBulk();
     if(activeTab === 'enc') $('#pane-enc').innerHTML = paneEnc();
     if(activeTab === 'log') $('#pane-log').innerHTML = paneLog();
+    if(activeTab === 'dice') $('#pane-dice').innerHTML = paneDice();
   });
   if(editingNote != null){ const el = document.getElementById('note-' + editingNote); if(el){ el.focus(); } }
 }
@@ -1143,6 +1288,7 @@ function cardHtml(c, cur){
         '<button class="mini ok" data-act="nat20" title="Natural 20: back up at 1 HP">Nat 20</button><button class="mini used" data-act="nat1" title="Natural 1: two failures">Nat 1</button></span>';
     }
   }
+  if(!lair) b += '<input class="roll-in" id="rl-' + id + '" data-keep data-enter="cardroll" placeholder="🎲 d20+5 adv" autocomplete="off" title="Roll as ' + esc(c.name) + ' (Enter). Add adv or dis for advantage / disadvantage.">';
   b += editingNote === id ? '<input class="note-in" id="note-' + id + '" data-keep data-change="note" data-enter="note" value="' + esc(c.notes) + '" placeholder="Note…">' :
     '<span class="note" data-act="editnote" title="Click to edit note">' + (c.notes ? esc(c.notes) : '＋ note') + '</span>';
   b += '<span class="spacer"></span>';
@@ -1171,6 +1317,33 @@ function renderBulk(){
 }
 
 /* ---------- sidebar panes ---------- */
+function performRoll(raw, mode, who, toast){
+  const r = rollExpr(raw, mode);
+  if(r.error){ notify('Dice: ' + esc(r.error), {kind:'warn', ttl:4000}); return null; }
+  const entry = {t:Date.now(), who:who || '', raw:r.raw, mode:r.mode, expr:r.expr, total:r.total, html:r.html, text:r.text, nat:r.nat};
+  diceHistory.unshift(entry); if(diceHistory.length > 30) diceHistory.length = 30; lastRoll = entry;
+  addLog((who ? who + ' rolls ' : 'Roll ') + r.expr + ': ' + r.total + ' (' + r.text + ')' + (r.nat === '20' ? ' — NATURAL 20!' : r.nat === '1' ? ' — natural 1' : ''));
+  sfx(r.nat === '20' ? 'crit' : r.nat === '1' ? 'fumble' : 'roll');
+  save(); render();
+  if(toast) notify((who ? '<b>' + esc(who) + '</b> ' : '') + esc(r.expr) + ': <b style="font-size:1.25em">' + r.total + '</b>' + (r.nat === '20' ? ' <b class="nat20">NATURAL 20!</b>' : r.nat === '1' ? ' <b class="nat1">natural 1</b>' : '') +
+    '<div style="opacity:.75;font-size:12px;margin-top:2px">' + r.html + '</div>', {kind:r.nat === '20' ? 'conc' : r.nat === '1' ? 'bad' : 'info', ttl:7000});
+  return entry;
+}
+function paneDice(){
+  const opts = state.combatants.filter(c => c.type !== 'lair').map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+  const big = lastRoll ? '<div class="dice-big ' + (lastRoll.nat === '20' ? 'crit' : lastRoll.nat === '1' ? 'fumble' : '') + '">' + lastRoll.total + '</div><div class="dice-sub">' +
+    (lastRoll.who ? '<b>' + esc(lastRoll.who) + '</b> · ' : '') + esc(lastRoll.expr) + ' → ' + lastRoll.html + (lastRoll.nat === '20' ? ' · <b class="nat20">NATURAL 20!</b>' : lastRoll.nat === '1' ? ' · <b class="nat1">natural 1</b>' : '') + '</div>' :
+    '<div class="dice-big">–</div><div class="dice-sub">Roll something!</div>';
+  return '<div class="fgrid"><div class="field span3"><label for="diceExpr">Dice expression</label><input id="diceExpr" data-keep data-enter="diceRoll" placeholder="d20+5 · 2d6+3 · 4d6kh3 · d%" autocomplete="off"></div>' +
+    '<div class="field"><label for="diceMode">Mode</label><select id="diceMode" data-keep><option value="normal">Normal</option><option value="adv">Advantage</option><option value="dis">Disadvantage</option></select></div>' +
+    '<div class="field span2"><label for="diceAs">Roll as</label><select id="diceAs" data-keep><option value="">— (nobody)</option>' + opts + '</select></div></div>' +
+    '<div class="actions-row"><button class="btn primary" data-act="diceRoll">🎲 Roll</button></div>' +
+    '<h3 class="sh">Quick dice</h3><div class="actions-row">' + [4, 6, 8, 10, 12, 20, 100].map(n => '<button class="btn small" data-act="quickdie" data-die="' + n + '">d' + n + '</button>').join('') +
+    '<input id="diceMod" data-keep type="number" placeholder="± mod" style="width:76px" title="Modifier added to quick dice"></div>' + big +
+    '<h3 class="sh">History <button class="mini" data-act="clearDice" style="margin-left:8px">clear</button></h3><div class="log-list dice-hist" style="max-height:260px">' +
+    (diceHistory.map((e, i) => '<div class="log-entry" data-act="dicere" data-i="' + i + '" title="Click to roll again"><span class="t">' + fmtClock(e.t) + (e.who ? ' · ' + esc(e.who) : '') + '</span>' + esc(e.expr) + ' = <b>' + e.total + '</b>' +
+      (e.nat === '20' ? ' <b class="nat20">NAT 20</b>' : e.nat === '1' ? ' <b class="nat1">NAT 1</b>' : '') + '<br><span style="opacity:.8">' + e.html + '</span></div>').join('') || '<div class="hint">Nothing rolled yet. Every roll is also written to the combat log. Type a roll into any combatant\'s card (for example <kbd>d20+5 adv</kbd>) to roll as them.</div>') + '</div>';
+}
 function paneParty(){
   const e = editingRoster ? roster.find(r => r.id === editingRoster) : null;
   const inCombat = r => state.combatants.some(c => c.rosterId === r.id);
@@ -1244,6 +1417,7 @@ function setTab(t){
   if(t === 'bestiary') $('#pane-bestiary').innerHTML = paneBestiary();
   if(t === 'enc') $('#pane-enc').innerHTML = paneEnc();
   if(t === 'log') $('#pane-log').innerHTML = paneLog();
+  if(t === 'dice') $('#pane-dice').innerHTML = paneDice();
 }
 
 /* =====================================================================
@@ -1358,6 +1532,20 @@ const actions = {
   }),
   selMonsters:() => { state.combatants.filter(c => c.type === 'monster').forEach(c => selected.add(c.id)); render(); },
   selNone:() => { selected.clear(); render(); },
+
+  /* dice */
+  diceRoll:() => {
+    const who = findById(num($('#diceAs').value, 0));
+    performRoll($('#diceExpr').value.trim() || 'd20', $('#diceMode').value, who ? who.name : '', false);
+  },
+  quickdie:el => {
+    const mod = num($('#diceMod').value, 0), who = findById(num($('#diceAs').value, 0));
+    performRoll('1d' + el.dataset.die + (mod > 0 ? '+' + mod : mod < 0 ? String(mod) : ''), $('#diceMode').value, who ? who.name : '', false);
+  },
+  dicere:el => { const e = diceHistory[+el.dataset.i]; if(e) performRoll(e.raw, e.mode, e.who, false); },
+  clearDice:() => { diceHistory.length = 0; lastRoll = null; render(); },
+  cardroll:el => { const c = findById(cardId(el)); if(!c) return; performRoll(el.value.trim() || 'd20', 'normal', c.name, true); },
+  testSound:() => { sfx('turn', true); setTimeout(() => sfx('roll', true), 750); setTimeout(() => sfx('crit', true), 1500); },
 
   /* add pane */
   rollInit:() => { $('#fInit').value = d(20) + num($('#fDex').value, 0); },
@@ -1514,7 +1702,7 @@ const changes = {
 /* =====================================================================
    Wiring
    ===================================================================== */
-const SET_BIND = [['themeSel', 'theme', 's'], ['optSkip', 'skipDefeated', 'c'], ['optFlash', 'flash', 'c'], ['optChime', 'chime', 'c'], ['optShowTimer', 'showTimer', 'c'], ['optTimerSec', 'turnTimerSec', 'n'],
+const SET_BIND = [['themeSel', 'theme', 's'], ['optVol', 'volume', 'n'], ['optSkip', 'skipDefeated', 'c'], ['optFlash', 'flash', 'c'], ['optChime', 'chime', 'c'], ['optShowTimer', 'showTimer', 'c'], ['optTimerSec', 'turnTimerSec', 'n'],
   ['pvPcNums', 'pvPcNums', 'c'], ['pvMonNums', 'pvMonNums', 'c'], ['pvLayout', 'pvLayout', 's']];
 function syncSettingsUI(){
   SET_BIND.forEach(b => { const el = $('#' + b[0]); if(b[2] === 'c') el.checked = !!state.settings[b[1]]; else el.value = state.settings[b[1]]; });
@@ -1526,7 +1714,7 @@ function bindSettings(){
       state.settings[key] = kind === 'c' ? el.checked : kind === 'n' ? Math.max(0, num(el.value, 0)) : el.value;
       if(key === 'pvLayout' && playerWin && !playerWin.closed){ try{ playerWin.resizeTo.apply(playerWin, el.value === 'ribbon' ? [1600, 190] : [1400, 900]); }catch(e){} }
       if(key === 'turnTimerSec') buzzedSeq = -1;
-      if(key === 'theme') applyTheme(el.value);
+      if(key === 'theme'){ applyTheme(el.value); sfx('turn'); }
       save(); broadcast(); renderHeader();
     });
   });
@@ -1595,7 +1783,7 @@ function initDM(){
   window.addEventListener('beforeunload', save);
   render(); save(); broadcast(); tickClock(); setInterval(tickClock, 500);
   if(hadSaved && state.combatants.length) notify('Restored your last session: ' + state.combatants.length + ' combatants, round ' + state.round + '.', {ttl:7000});
-  window.__tt = {getState:() => state, getRoster:() => roster, getTemplates:() => templates, reorder:(id, t, a) => mutate('reorder', () => reorder(id, t, a)), playerSnapshot};
+  window.__tt = {getState:() => state, getRoster:() => roster, getTemplates:() => templates, reorder:(id, t, a) => mutate('reorder', () => reorder(id, t, a)), playerSnapshot, rollExpr, sfx};
 }
 
 if(IS_PLAYER) initPlayer(); else initDM();

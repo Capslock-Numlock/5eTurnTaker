@@ -34,7 +34,7 @@ No installation, no build step, no server, no account. Fonts load from Google Fo
 
 ## Themes
 
-Pick a theme from the dropdown next to the title. The choice is saved, and the player window follows it automatically. The app name, subtitle, browser-tab title and icon change with the theme.
+Pick a theme from the dropdown next to the title. The choice is saved, and the player window follows it automatically. The app name, subtitle, browser-tab title and icon change with the theme, and so do the sounds (see below).
 
 | Theme | App name | Look |
 | --- | --- | --- |
@@ -42,15 +42,42 @@ Pick a theme from the dropdown next to the title. The choice is saved, and the p
 | **Descent into Avernus** | Hellfire Tracker | Lava and embers, with a slow hellfire glow along the bottom edge |
 | **Curse of Strahd** | Barovia Tracker | Dark purple with gothic lettering and a drifting-fog vignette |
 | **Classic 5e** | 5e Turn Taker | Neutral brown leather and bronze |
+| **Icewind Dale** | Icewind Tracker | Ice blue, a slow aurora and drifting snow |
 
 <div align="center">
 <img src="docs/theme-avernus.png" alt="Avernus theme" width="440">
 <img src="docs/theme-strahd.png" alt="Curse of Strahd theme" width="440">
 <img src="docs/theme-classic.png" alt="Classic 5e theme" width="440">
 <img src="docs/theme-tomb.png" alt="Tomb of Annihilation theme" width="440">
+<img src="docs/theme-icewind.png" alt="Icewind Dale theme with the dice roller open" width="440">
 </div>
 
 HP colors (green, amber, red) stay the same in every theme so health is always readable at a glance. Animations respect the system "reduce motion" setting.
+
+## Dice roller
+
+The **Dice** tab is a full roller for the DM, and every roll is also written to the combat log.
+
+- Expressions: `d20+5`, `2d6+3`, `4d6kh3`, `2d8+1d4-2`, `d%`
+- Advantage and disadvantage from a dropdown, or just add `adv` / `dis` to the expression (`d20+7 adv`)
+- Quick buttons for d4 to d100 with a modifier box, and a "Roll as" picker so results are credited to a creature
+- Natural 20 and natural 1 are highlighted; dropped dice are struck through
+- Every combatant card has its own roll box: type `d20+5 adv`, press Enter, and the result pops up as that creature. The box remembers the roll so you can hit Enter again for the next attack
+- Roll history: click any entry to roll it again
+
+## Sounds
+
+Turn changes, the turn timer, dice rolls, natural 20s and natural 1s all have sound effects, synthesized live in the browser (no audio files, so the app stays a single file). **Each theme has its own voice:**
+
+| Theme | Sound |
+| --- | --- |
+| Tomb of Annihilation | Wooden marimba, stone knocks, skin drum |
+| Descent into Avernus | Infernal horns, tritones, crackling fire |
+| Curse of Strahd | Tolling church bell, harpsichord, organ chord |
+| Classic 5e | Tavern ding, wooden dice, brass flourish |
+| Icewind Dale | Glass pings, ice cracks, howling wind |
+
+Sounds play from the DM window (browsers only allow audio after you click something). Switch them off or change the volume in **Options**, where a Test button plays a sample.
 
 ## Features
 
@@ -75,6 +102,7 @@ HP colors (green, amber, red) stay the same in every theme so health is always r
 - Add many at once ("Velociraptor ×4"), with rolled or average HP, individual or shared initiative
 - Hidden monsters: add or reveal them whenever you like
 - Encounter difficulty and XP calculator using the 2014 DMG thresholds and group multipliers
+- Dice roller with advantage, keep-highest and per-creature rolls
 - Combat log, exportable as text; per-fight stats for the session
 - Unlimited undo / redo, autosave, JSON export and import
 
@@ -82,7 +110,7 @@ HP colors (green, amber, red) stay the same in every theme so health is always r
 - Separate window with **no** AC, notes, lair actions, hidden monsters or condition timers
 - HP as a health bar with Healthy / Injured / Bloodied / Critical labels, or real numbers (separate toggles for PCs and monsters)
 - Cards layout for a full screen, or a slim **ribbon** you can dock along the edge of the map
-- Matches the DM's chosen theme
+- Matches the DM's chosen theme (sound stays on the DM's side)
 - "Next up" preview, current-turn flash, optional chime and visible turn timer
 
 <div align="center">
