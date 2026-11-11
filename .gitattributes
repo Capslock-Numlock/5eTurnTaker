@@ -1,0 +1,6 @@
+# Make GitHub count the single-file app as HTML in the language bar
+*.html linguist-detectable=true
+*.html linguist-language=HTML
+
+# Screenshots are documentation, not code
+docs/** linguist-documentation
