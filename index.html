@@ -137,8 +137,9 @@
   .type-tag.npc{background:var(--olive);} .type-tag.lair{background:var(--purple);}
   .chip{font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--ivory-dim);font-family:'JetBrains Mono',monospace;}
   .chip.hid{border-color:var(--amber);color:var(--amber);}
-  .conc-flag{font-size:10.5px;padding:2px 6px;border-radius:4px;background:#1b2535;color:#9fb4d8;cursor:pointer;border:1px solid #2f4060;}
-  .conc-flag.on{background:#2b4a8a;color:#e4eeff;border-color:#5f8be0;}
+  .conc-flag{font-size:10.5px;padding:2px 6px;border-radius:4px;background:transparent;color:var(--ivory-dim);cursor:pointer;border:1px dashed var(--line);opacity:.55;}
+  .conc-flag:hover{opacity:1;border-color:#5f8be0;}
+  .conc-flag.on{background:#2b4a8a;color:#e4eeff;border:1px solid #5f8be0;opacity:1;}
   .hp-col{display:flex;flex-direction:column;gap:4px;}
   .hp-bar-track{height:9px;border-radius:5px;background:#0a120d;border:1px solid var(--line);overflow:hidden;}
   .hp-bar-fill{height:100%;transition:width .25s ease;}

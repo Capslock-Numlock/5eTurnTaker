@@ -1,28 +1,101 @@
-# 5e Turn Taker
+<div align="center">
 
-A single-file combat tracker for in-person D&D 5e (2014 rules) sessions. Built for a DM running Foundry VTT on a projector: the DM view stays on the DM's screen and a separate, player-safe window can be shown to the table.
+# 🐉 5e Turn Taker
 
-## Run it
+**A fast, single-file combat tracker for in-person D&D 5e (2014 rules).**
+Run it on the DM's screen. Show a spoiler-free view to the table.
 
-Download `index.html` and double-click it (Edge or Chrome). No install, no build, no server. It also works from GitHub Pages if you enable it for this repo.
+![No install](https://img.shields.io/badge/install-none-2c472c?style=flat-square)
+![Single file](https://img.shields.io/badge/single%20file-HTML%2FCSS%2FJS-c9a227?style=flat-square)
+![Offline](https://img.shields.io/badge/works-offline-5c9c5a?style=flat-square)
+![License: MIT](https://img.shields.io/badge/license-MIT-6f9bb8?style=flat-square)
+
+<img src="docs/dm-view.png" alt="DM view of the combat tracker" width="900">
+
+</div>
+
+---
+
+## Why
+
+Running combat at a table with a projector or TV means juggling initiative, HP, conditions, concentration and timers, while the players must not see AC, hidden monsters or DM notes. Turn Taker keeps all the bookkeeping on your screen and gives the table a clean, read-only window.
+
+Built by a DM running *Tomb of Annihilation* with Foundry VTT on a laptop and projector, but it works for any 2014-rules 5e game.
+
+## Quick start
+
+1. Download [`index.html`](index.html) (or clone this repo).
+2. Double-click it. It opens in Edge, Chrome or any modern browser.
+3. Add combatants, press **Start Combat**, then **Open ↗** in the Player View bar and drag that window to the projector.
+
+No installation, no build step, no server, no account. Fonts load from Google Fonts when online and fall back to system fonts offline.
+
+> **Tip:** double-click anywhere in the player window for full screen.
 
 ## Features
 
-- Initiative order with DEX tie-breaks and drag-to-reorder (delay / ready actions)
-- Round counter, session / fight / turn timers, optional turn limit
-- HP with typed shortcuts (`-12`, `+5`, `t8` temp HP, `=20` set), group damage with per-target half / full / double
-- Conditions with 2014 PHB text on hover and round-based durations
-- Concentration save prompts, reaction tracker, legendary actions, recharge abilities
-- Death saves with nat 20 / nat 1 buttons, massive-damage check
-- Hidden monsters, DM-only notes
-- Party roster (HP carries between fights), editable monster templates (Tomb of Annihilation starters)
-- Encounter difficulty and XP calculator (2014 DMG)
-- Player view window: cards or slim ribbon layout, next-up preview, turn flash and chime
-- Autosave, undo / redo, JSON export / import, combat log export
+### Running combat
+- Initiative order with DEX tie-breaks, and drag-to-reorder for delayed or readied actions
+- Round counter plus session, fight and per-turn clocks, with an optional turn timer and buzzer
+- Turns follow the creature, not the list position, so adding or removing combatants mid-round is safe
+- Skips defeated monsters and dead PCs automatically (optional)
+- Lair actions on initiative 20
 
-## Notes
+### Hit points and effects
+- Type damage straight into a card: `-12` damage, `+5` heal, `t8` temp HP, `=20` set HP
+- Group damage: select several creatures, then apply full, half, double or no damage to each (saves, resistance, vulnerability)
+- Conditions with 2014 PHB rules text on hover, and round durations that expire on their own
+- Concentration tracking with an automatic **CON save DC** prompt on every hit
+- Reaction tracker, legendary action pips and recharge abilities (d6 prompts at the start of a turn)
+- Death saves with Nat 20 and Nat 1 buttons, massive-damage instant death
 
-- Data is saved in the browser's local storage. Use Export to back up or move to another machine.
-- Starter monster stats are from memory of the 2014 Monster Manual; check them against your book.
+### Prep and bookkeeping
+- Party roster: save your PCs once; HP carries over between fights; long-rest button
+- Monster bestiary: editable templates with dice-based HP and a Tomb of Annihilation starter set
+- Add many at once ("Velociraptor ×4"), with rolled or average HP, individual or shared initiative
+- Hidden monsters: add or reveal them whenever you like
+- Encounter difficulty and XP calculator using the 2014 DMG thresholds and group multipliers
+- Combat log, exportable as text; per-fight stats for the session
+- Unlimited undo / redo, autosave, JSON export and import
 
-Released under the MIT License.
+### Player view
+- Separate window with **no** AC, notes, lair actions, hidden monsters or condition timers
+- HP as a health bar with Healthy / Injured / Bloodied / Critical labels, or real numbers (separate toggles for PCs and monsters)
+- Cards layout for a full screen, or a slim **ribbon** you can dock along the edge of the map
+- "Next up" preview, current-turn flash, optional chime and visible turn timer
+
+<div align="center">
+<img src="docs/player-view.png" alt="Player-safe view" width="600">
+</div>
+
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| `Space` / `Enter` | Next turn (when not typing in a field) |
+| `Ctrl` + `Z` | Undo |
+| `Ctrl` + `Y` | Redo |
+| `Esc` | Deselect / close dialog |
+| `Enter` in an HP box | Apply the typed command |
+
+## Data and privacy
+
+Everything stays in your browser. Combat state, roster and monster templates are kept in `localStorage`; nothing is sent anywhere. Use **Export** to back up a session or move it to another computer, and **Import** to restore it.
+
+## Rules coverage
+
+Implements the **2014** 5e rules: DMG encounter thresholds and multipliers (levels 1-20), PHB conditions, concentration DC = max(10, damage ÷ 2), death saves and massive damage, legendary actions regained at the start of the creature's turn.
+
+Bestiary starter stats are entered by hand from the 2014 Monster Manual and may contain errors. Check them against your book; every template is editable.
+
+## Browser support
+
+Current Chrome and Edge are tested. Firefox and Safari should work; the player window relies on pop-ups, so allow them for the page. Opening from `file://` is supported.
+
+## Contributing
+
+Issues and pull requests are welcome. The whole app lives in `index.html`: styles, markup and one script. There is nothing to compile.
+
+## License
+
+[MIT](LICENSE)
