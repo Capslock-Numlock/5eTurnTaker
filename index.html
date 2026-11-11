@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tomb Tracker — Combat Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b1410; --panel:#121e18; --panel-2:#182a20; --line:#2a3f32;
+    --ivory:#e9e3cf; --ivory-dim:#a9a795;
+    --gold:#c9a227; --gold-bright:#e6c34d;
+    --red:#b23a3a; --red-bright:#d95050; --green:#5c9c5a; --steel:#6f9bb8;
+    --olive:#9a8a4f; --purple:#8c6fb8; --amber:#e0a43a;
+    --shadow:0 6px 20px rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, #1a2b20 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 110%, #16241b 0%, transparent 50%),
+      var(--void);
+    background-attachment:fixed;
+    color:var(--ivory);
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    min-height:100vh; padding:18px;
+  }
+  h1,h2,h3{font-family:'Cinzel',Georgia,serif;margin:0;}
+  .app{max-width:1560px;margin:0 auto;}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap;}
+  .title-block h1{font-size:25px;letter-spacing:1.5px;color:var(--gold-bright);text-shadow:0 2px 8px rgba(0,0,0,.6);}
+  .title-block p{margin:2px 0 0;color:var(--ivory-dim);font-size:12px;letter-spacing:.4px;}
+  .save-ind{margin-left:8px;color:#8fbf8d;font-size:11px;}
+  .save-ind.bad{color:var(--red-bright);}
+  .glyph-counter{display:flex;align-items:center;gap:14px;}
+  .glyph{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#24382b,#0f1913 70%);
+    border:2px solid var(--gold);box-shadow:inset 0 0 14px rgba(0,0,0,.6),0 0 18px rgba(201,162,39,.18);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+  .glyph .num{font-family:'Cinzel',serif;font-weight:900;font-size:29px;color:var(--gold-bright);line-height:1;}
+  .glyph .lbl{font-size:9px;letter-spacing:2px;color:var(--ivory-dim);margin-top:2px;}
+  .turn-name{display:flex;flex-direction:column;gap:2px;}
+  .turn-name .cur-label{font-size:10px;letter-spacing:2px;color:var(--ivory-dim);}
+  .turn-name .cur-value{font-family:'Cinzel',serif;font-size:19px;color:var(--gold-bright);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .timers{display:flex;gap:16px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ivory-dim);letter-spacing:1px;text-transform:uppercase;}
+  .timers b{display:block;font-size:17px;color:var(--ivory);font-weight:700;letter-spacing:0;text-transform:none;}
+  .timers .warn b{color:var(--red-bright);}
+
+  /* ---------- buttons / inputs ---------- */
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:1px solid var(--line);background:var(--panel-2);color:var(--ivory);
+    padding:8px 14px;border-radius:7px;cursor:pointer;letter-spacing:.3px;transition:all .12s ease;}
+  .btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold-bright);background:#1c2f22;}
+  .btn:active:not(:disabled){transform:translateY(1px);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.primary{background:linear-gradient(180deg,#3a5c3a,#2c472c);border-color:#4a7a4a;color:#eef7ea;}
+  .btn.primary:hover:not(:disabled){border-color:var(--gold);background:linear-gradient(180deg,#436343,#345234);}
+  .btn.danger{background:#3a1f1f;border-color:#5a2a2a;}
+  .btn.danger:hover:not(:disabled){border-color:var(--red-bright);color:#ffb3b3;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:4px 9px;font-size:12px;border-radius:5px;}
+  .btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px;}
+  .actions-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  input,select{background:#0f1a13;border:1px solid var(--line);color:var(--ivory);padding:7px 9px;border-radius:6px;
+    font-family:'Inter',sans-serif;font-size:13px;width:100%;}
+  input[type=number]{font-family:'JetBrains Mono',monospace;}
+  input[type=checkbox]{width:auto;accent-color:var(--gold);}
+  label{font-size:10.5px;color:var(--ivory-dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px;}
+  .field{display:flex;flex-direction:column;}
+
+  /* ---------- player view strip + options ---------- */
+  .pv-strip{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12.5px;color:var(--ivory-dim);}
+  .pv-strip strong{color:var(--ivory);font-weight:600;}
+  .tog{display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-size:12.5px;color:var(--ivory-dim);text-transform:none;letter-spacing:0;}
+  .pv-strip select{width:auto;padding:4px 8px;font-size:12.5px;}
+  .pv-status{font-size:11.5px;padding:3px 8px;border-radius:10px;background:#1c2f22;border:1px solid var(--line);}
+  .pv-status.live{color:#bfe6bf;border-color:var(--green);background:#16261a;}
+  details.opts{margin-bottom:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:12.5px;color:var(--ivory-dim);}
+  details.opts summary{cursor:pointer;color:var(--ivory);font-weight:600;}
+  .opts-body{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-top:9px;}
+  .opts-body input[type=number]{width:70px;padding:4px 6px;}
+
+  /* ---------- layout ---------- */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px;align-items:start;}
+  @media (max-width:1100px){.layout{grid-template-columns:1fr;}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px;}
+  .list-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .panel h2{font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;}
+  h3.sh{font-size:12px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;margin:16px 0 8px;}
+  .side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;}
+  .tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+  .tab{font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);
+    background:transparent;color:var(--ivory-dim);cursor:pointer;}
+  .tab:hover{color:var(--gold-bright);border-color:var(--gold);}
+  .tab.on{background:#1c2f22;color:var(--gold-bright);border-color:var(--gold);}
+  .pane{display:none;} .pane.on{display:block;}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+  .span2{grid-column:span 2;} .span3{grid-column:1/-1;}
+  .checks{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+  .hint{font-size:11.5px;color:var(--ivory-dim);margin-top:8px;line-height:1.45;}
+  .mini-form{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px;background:#0f1a13;}
+  .trow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;margin-bottom:6px;background:var(--panel-2);}
+  .trow .tinfo{min-width:0;font-size:13px;} .trow .tinfo span{display:block;font-size:11px;color:var(--ivory-dim);}
+  .trow .tbtns{display:flex;gap:5px;flex-shrink:0;}
+  .addparty{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .addparty td{padding:4px 4px;} .addparty input[type=number]{width:62px;padding:4px 6px;}
+
+  /* ---------- combatant cards ---------- */
+  .empty{text-align:center;padding:40px 20px;color:var(--ivory-dim);border:1px dashed var(--line);border-radius:8px;font-size:14px;}
+  .combatant{background:var(--panel-2);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:10px;
+    padding:10px 12px;margin-bottom:10px;position:relative;transition:box-shadow .15s ease,border-color .15s ease;}
+  .combatant.type-monster{border-left-color:var(--red);}
+  .combatant.type-npc{border-left-color:var(--olive);}
+  .combatant.type-lair{border-left-color:var(--purple);background:#1a1526;}
+  .combatant.current{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 16px rgba(201,162,39,.25);}
+  .combatant.down .card-top{opacity:.6;}
+  .combatant.selected{outline:2px solid #7aa7ff;outline-offset:1px;}
+  .combatant.is-hidden{border-style:dashed;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 8px,transparent 8px 16px);}
+  .combatant.dragging{opacity:.35;}
+  .combatant.drop-before{box-shadow:0 -4px 0 var(--gold-bright);}
+  .combatant.drop-after{box-shadow:0 4px 0 var(--gold-bright);}
+  .card-top{display:grid;grid-template-columns:auto 58px minmax(120px,1fr) 215px 56px;gap:12px;align-items:center;}
+  .card-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);}
+  .lead{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .selbox{width:16px;height:16px;cursor:pointer;}
+  .drag{cursor:grab;color:var(--ivory-dim);font-size:15px;line-height:1;user-select:none;letter-spacing:-2px;padding:2px 3px;}
+  .drag:active{cursor:grabbing;}
+  .init-edit{width:58px;height:44px;text-align:center;font-weight:700;font-size:17px;color:var(--gold-bright);padding:0;background:#0f1a13;border-radius:8px;}
+  .name-col{min-width:0;}
+  .name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .cname{font-weight:600;font-size:15px;}
+  .type-tag{font-size:9.5px;letter-spacing:1px;padding:2px 6px;border-radius:4px;text-transform:uppercase;color:var(--void);font-weight:700;}
+  .type-tag.pc{background:var(--steel);} .type-tag.monster{background:var(--red-bright);}
+  .type-tag.npc{background:var(--olive);} .type-tag.lair{background:var(--purple);}
+  .chip{font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--ivory-dim);font-family:'JetBrains Mono',monospace;}
+  .chip.hid{border-color:var(--amber);color:var(--amber);}
+  .conc-flag{font-size:10.5px;padding:2px 6px;border-radius:4px;background:#1b2535;color:#9fb4d8;cursor:pointer;border:1px solid #2f4060;}
+  .conc-flag.on{background:#2b4a8a;color:#e4eeff;border-color:#5f8be0;}
+  .hp-col{display:flex;flex-direction:column;gap:4px;}
+  .hp-bar-track{height:9px;border-radius:5px;background:#0a120d;border:1px solid var(--line);overflow:hidden;}
+  .hp-bar-fill{height:100%;transition:width .25s ease;}
+  .hp-nums{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:13px;}
+  .hp-text{min-width:62px;}
+  .hp-input{width:68px;padding:4px 6px;font-size:12px;}
+  .ac-col{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .ac-shield{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;
+    font-size:14px;background:#0f1a13;border:1px solid var(--line);border-radius:50% 50% 50% 4px;color:var(--ivory);}
+  .ac-lbl{font-size:9px;color:var(--ivory-dim);letter-spacing:1px;}
+  .conditions{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+  .cond-tag{font-size:10.5px;background:#3a2a12;color:#f0c987;border:1px solid #5a4420;padding:2px 7px;border-radius:10px;cursor:pointer;position:relative;}
+  .cond-tag:hover{background:#4a3618;}
+  .tip[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;top:100%;margin-top:6px;background:#0b1410;border:1px solid var(--gold);
+    padding:8px 10px;border-radius:6px;width:max-content;max-width:290px;font-size:12px;line-height:1.4;color:var(--ivory);z-index:60;white-space:normal;
+    box-shadow:var(--shadow);font-family:'Inter',sans-serif;font-weight:400;text-transform:none;letter-spacing:0;}
+  .cond-in{width:130px;font-size:11.5px;padding:3px 6px;} .cond-dur{width:52px;font-size:11.5px;padding:3px 6px;}
+  .mini{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:#0f1a13;color:var(--ivory-dim);cursor:pointer;font-weight:600;}
+  .mini:hover{border-color:var(--gold);color:var(--gold-bright);}
+  .mini.used{border-color:var(--red-bright);color:#ffb3b3;} .mini.ok{border-color:var(--green);color:#bfe6bf;}
+  .mini.warn{border-color:var(--amber);color:var(--amber);}
+  .lpips{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ivory-dim);}
+  .lpip{width:13px;height:13px;border-radius:50%;border:1px solid var(--gold);background:var(--gold);cursor:pointer;padding:0;}
+  .lpip.spent{background:transparent;}
+  .rch{display:inline-flex;gap:6px;align-items:center;padding:2px 4px 2px 9px;border-radius:10px;border:1px solid var(--line);font-size:11.5px;}
+  .rch.ready{border-color:var(--green);color:#bfe6bf;} .rch.spent{border-color:var(--red-bright);color:#ffb3b3;}
+  .note{font-size:12px;color:var(--ivory-dim);font-style:italic;cursor:text;max-width:340px;}
+  .note:hover{color:var(--ivory);}
+  .note-in{width:260px;font-size:12px;padding:3px 7px;}
+  .ds{display:flex;gap:10px;align-items:center;font-size:10.5px;color:var(--ivory-dim);flex-wrap:wrap;}
+  .pip-row{display:flex;gap:3px;}
+  .pip{width:13px;height:13px;border-radius:50%;border:1px solid var(--line);cursor:pointer;background:#0f1a13;}
+  .pip.success.on{background:var(--green);border-color:var(--green);} .pip.fail.on{background:var(--red-bright);border-color:var(--red-bright);}
+  .spacer{flex:1;}
+  .deadtag{font-size:11px;color:var(--red-bright);font-weight:700;letter-spacing:1px;}
+
+  /* ---------- bulk bar ---------- */
+  #bulkBar{display:none;position:sticky;bottom:12px;z-index:30;margin-top:12px;background:#101c2e;border:1px solid #5f8be0;border-radius:10px;
+    padding:10px 14px;box-shadow:0 8px 26px rgba(0,0,0,.6);}
+  #bulkBar.open{display:block;}
+  .bulk-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+  .bulk-row:first-child{margin-top:0;}
+  .bt{display:inline-flex;gap:5px;align-items:center;font-size:12px;background:#0f1a13;border:1px solid var(--line);border-radius:6px;padding:3px 4px 3px 8px;}
+  .bt select{width:auto;padding:2px 4px;font-size:11.5px;}
+  #bulkBar input{width:100px;} #bulkBar input#bulkCond{width:150px;} #bulkBar input#bulkDur{width:62px;}
+
+  /* ---------- log ---------- */
+  .log-list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px;}
+  .log-entry{font-size:12px;color:var(--ivory-dim);border-left:2px solid var(--line);padding-left:8px;line-height:1.4;}
+  .log-entry .t{opacity:.7;font-size:10.5px;display:block;}
+  .thr{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0;text-align:center;}
+  .thr div{border:1px solid var(--line);border-radius:6px;padding:6px 2px;background:#0f1a13;font-size:10.5px;color:var(--ivory-dim);text-transform:uppercase;letter-spacing:1px;}
+  .thr b{display:block;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ivory);letter-spacing:0;}
+  .diff{font-family:'Cinzel',serif;font-size:24px;text-align:center;margin:10px 0 2px;}
+  .diff.Trivial{color:var(--ivory-dim);} .diff.Easy{color:var(--green);} .diff.Medium{color:var(--gold-bright);}
+  .diff.Hard{color:var(--amber);} .diff.Deadly{color:var(--red-bright);}
+  .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--line);}
+  .kv b{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- toasts / modal ---------- */
+  #toasts{position:fixed;top:14px;right:14px;width:370px;display:flex;flex-direction:column;gap:8px;z-index:200;}
+  .toast{background:#0f1a13;border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:8px;padding:10px 32px 10px 12px;
+    box-shadow:var(--shadow);font-size:13px;position:relative;line-height:1.4;}
+  .toast.warn{border-left-color:var(--amber);} .toast.conc{border-left-color:#7aa7ff;} .toast.bad{border-left-color:var(--red-bright);}
+  .toast .tacts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .toast .tx{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--ivory-dim);cursor:pointer;font-size:14px;}
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:300;}
+  #modal.open{display:flex;}
+  .modal-card{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:22px;width:min(540px,92vw);box-shadow:var(--shadow);}
+  .modal-card h2{font-size:18px;margin-bottom:12px;}
+  .footer-hint{margin-top:16px;text-align:center;color:var(--ivory-dim);font-size:11.5px;line-height:1.6;}
+  kbd{background:#0f1a13;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-family:'JetBrains Mono',monospace;}
+  ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+
+  /* ============ PLAYER VIEW ============ */
+  #playerRoot{display:none;}
+  body.player-mode{padding:0;}
+  body.player-mode #dmRoot,body.player-mode #toasts,body.player-mode #modal{display:none;}
+  body.player-mode #playerRoot{display:block;}
+  .pv-wrap{max-width:1100px;margin:0 auto;padding:34px 28px 60px;}
+  .pv-header{display:flex;align-items:center;justify-content:center;gap:28px;margin-bottom:30px;}
+  .pv-glyph{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#24382b,#0f1913 70%);border:3px solid var(--gold);
+    box-shadow:inset 0 0 22px rgba(0,0,0,.6),0 0 30px rgba(201,162,39,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .pv-glyph .num{font-family:'Cinzel',serif;font-weight:900;font-size:48px;color:var(--gold-bright);line-height:1;}
+  .pv-glyph .lbl{font-size:11px;letter-spacing:3px;color:var(--ivory-dim);margin-top:4px;}
+  .pv-turn .l{font-size:13px;letter-spacing:3px;color:var(--ivory-dim);}
+  .pv-turn .v{font-family:'Cinzel',serif;font-size:38px;color:var(--gold-bright);}
+  .pv-timer{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--ivory-dim);margin-top:4px;min-height:26px;}
+  .pv-timer.low{color:var(--red-bright);animation:pvblink .8s ease-in-out infinite;}
+  .pv-card{display:grid;grid-template-columns:1fr 230px;gap:20px;align-items:center;background:var(--panel-2);border:1px solid var(--line);
+    border-left:6px solid var(--steel);border-radius:12px;padding:16px 22px;margin-bottom:12px;position:relative;}
+  .pv-card.type-monster{border-left-color:var(--red);} .pv-card.type-npc{border-left-color:var(--olive);}
+  .pv-card.current{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 26px rgba(201,162,39,.3);animation:pvpulse 2.2s ease-in-out infinite;}
+  .pv-card.go,.rb-item.go{animation:pvpop .9s ease-out, pvpulse 2.2s ease-in-out .9s infinite;}
+  .pv-card.pv-down{opacity:.5;}
+  .pv-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+  .pv-name{font-size:22px;font-weight:700;}
+  .pv-next{font-size:11px;letter-spacing:2px;color:var(--void);background:var(--gold);padding:2px 8px;border-radius:10px;font-weight:700;}
+  .pv-conditions{display:flex;gap:6px;flex-wrap:wrap;}
+  .pv-cond{font-size:12px;background:#3a2a12;color:#f0c987;border:1px solid #5a4420;padding:3px 9px;border-radius:10px;}
+  .pv-conc{font-size:11.5px;padding:3px 9px;border-radius:10px;background:#2b4a8a;color:#e4eeff;border:1px solid #5f8be0;}
+  .pv-hp-track{height:16px;border-radius:8px;background:#0a120d;border:1px solid var(--line);overflow:hidden;}
+  .pv-hp-fill{height:100%;transition:width .3s ease;}
+  .pv-hp-label{margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:15px;text-align:center;color:var(--ivory-dim);}
+  .pv-empty{text-align:center;color:var(--ivory-dim);padding:60px 20px;font-size:22px;font-family:'Cinzel',serif;}
+  .pv-down-tag{font-size:13px;color:var(--red-bright);font-weight:700;letter-spacing:1px;}
+  #pvFlash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50;}
+  #pvFlash.go{animation:pvflash .9s ease-out;}
+  @keyframes pvpulse{0%,100%{box-shadow:0 0 0 2px var(--gold),0 0 22px rgba(201,162,39,.22);}50%{box-shadow:0 0 0 2px var(--gold-bright),0 0 34px rgba(201,162,39,.4);}}
+  @keyframes pvpop{0%{transform:scale(1);}25%{transform:scale(1.045);}100%{transform:scale(1);}}
+  @keyframes pvflash{0%{opacity:1;box-shadow:inset 0 0 0 0 rgba(230,195,77,0);}18%{box-shadow:inset 0 0 90px 12px rgba(230,195,77,.5);}100%{opacity:0;box-shadow:inset 0 0 0 0 rgba(230,195,77,0);}}
+  @keyframes pvblink{0%,100%{opacity:1;}50%{opacity:.45;}}
+
+  /* ribbon layout */
+  body.player-mode.ribbon{overflow:hidden;}
+  .rb{display:flex;align-items:stretch;gap:10px;height:100vh;padding:10px 12px;}
+  .rb-round{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;min-width:80px;border:2px solid var(--gold);
+    border-radius:12px;background:radial-gradient(circle at 35% 30%,#24382b,#0f1913 70%);}
+  .rb-round .n{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(22px,5vh,46px);color:var(--gold-bright);line-height:1;}
+  .rb-round .l{font-size:clamp(8px,1.6vh,11px);letter-spacing:2px;color:var(--ivory-dim);margin-top:3px;}
+  .rb-list{flex:1 1 auto;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;scrollbar-width:none;padding:6px 4px;}
+  .rb-list::-webkit-scrollbar{display:none;}
+  .rb-item{flex:1 1 0;min-width:130px;max-width:270px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:7px 11px;background:var(--panel-2);
+    border:1px solid var(--line);border-top:4px solid var(--steel);border-radius:10px;position:relative;}
+  .rb-item.type-monster{border-top-color:var(--red);} .rb-item.type-npc{border-top-color:var(--olive);}
+  .rb-item.current{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 22px rgba(201,162,39,.35);z-index:1;}
+  .rb-item.down{opacity:.5;}
+  .rb-name{font-weight:700;font-size:clamp(13px,3.2vh,22px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rb-hpbar{height:8px;border-radius:4px;background:#0a120d;border:1px solid var(--line);overflow:hidden;}
+  .rb-hpbar>div{height:100%;}
+  .rb-sub{display:flex;justify-content:space-between;gap:6px;font-size:clamp(10px,2.3vh,15px);font-family:'JetBrains Mono',monospace;color:var(--ivory-dim);}
+  .rb-conds{display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden;font-size:clamp(9px,2vh,12px);}
+  .rb-conds span{background:#3a2a12;color:#f0c987;border:1px solid #5a4420;padding:0 6px;border-radius:8px;white-space:nowrap;}
+  .rb-tag{position:absolute;top:-9px;left:10px;font-size:9px;letter-spacing:2px;background:var(--gold);color:var(--void);font-weight:700;padding:1px 7px;border-radius:8px;}
+  .rb-timer{flex:0 0 auto;align-self:center;font-family:'JetBrains Mono',monospace;font-size:clamp(16px,4vh,30px);color:var(--ivory-dim);min-width:64px;text-align:center;}
+  .rb-timer.low{color:var(--red-bright);animation:pvblink .8s ease-in-out infinite;}
+  @media (orientation:portrait){
+    body.player-mode.ribbon{overflow:auto;}
+    .rb{flex-direction:column;height:auto;min-height:100vh;}
+    .rb-list{flex-direction:column;overflow-x:hidden;overflow-y:auto;}
+    .rb-item{max-width:none;flex:0 0 auto;}
+    .rb-round{flex-direction:row;gap:10px;padding:8px 14px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pv-card.current,.pv-card.go,.rb-item.go,#pvFlash.go,.pv-timer.low,.rb-timer.low{animation:none;}
+    .rb-list{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= DM VIEW ======================= -->
+<div id="dmRoot">
+<div class="app">
+
+  <div class="topbar">
+    <div class="title-block">
+      <h1>TOMB TRACKER</h1>
+      <p>Combat manager — Tomb of Annihilation table <span class="save-ind" id="saveInd"></span></p>
+    </div>
+
+    <div class="glyph-counter">
+      <div class="glyph"><div class="num" id="roundNum">1</div><div class="lbl">ROUND</div></div>
+      <div class="turn-name">
+        <div class="cur-label">CURRENT TURN</div>
+        <div class="cur-value" id="curName">—</div>
+        <div class="actions-row" style="margin-top:6px;">
+          <button class="btn primary" id="nextTurnBtn" data-act="next">Next Turn ▶</button>
+          <button class="btn ghost" data-act="prev">◀ Back</button>
+          <button class="btn ghost" id="undoBtn" data-act="undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+          <button class="btn ghost" id="redoBtn" data-act="redo" title="Redo (Ctrl+Y)">↷</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="timers">
+      <div>Session<b id="sessClock">0:00</b></div>
+      <div>Fight<b id="fightClock">—</b></div>
+      <div id="turnBox">Turn<b id="turnClock">—</b></div>
+      <button class="btn small" id="pauseBtn" data-act="pause" title="Pause or resume the turn timer">Pause</button>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn" id="endBtn" data-act="endCombat" style="display:none;">End Combat</button>
+      <button class="btn" data-act="export">Export</button>
+      <label class="btn" style="margin:0;display:inline-block;text-transform:none;letter-spacing:.3px;font-size:13px;color:var(--ivory);">Import<input type="file" id="importFile" accept="application/json" style="display:none;"></label>
+      <button class="btn danger" data-act="clearAll">Clear All</button>
+    </div>
+  </div>
+
+  <div class="pv-strip">
+    <strong>Player View</strong>
+    <button class="btn" id="openPlayerBtn" data-act="openPlayer">Open ↗</button>
+    <span class="pv-status" id="pvStatus">not open</span>
+    <span>Layout
+      <select id="pvLayout"><option value="cards">Cards (full screen)</option><option value="ribbon">Ribbon (slim strip)</option></select>
+    </span>
+    <label class="tog"><input type="checkbox" id="pvPcNums"> PC HP numbers</label>
+    <label class="tog"><input type="checkbox" id="pvMonNums"> Monster HP numbers</label>
+  </div>
+
+  <details class="opts">
+    <summary>Options</summary>
+    <div class="opts-body">
+      <label class="tog"><input type="checkbox" id="optSkip"> Skip defeated monsters &amp; dead PCs</label>
+      <label class="tog"><input type="checkbox" id="optFlash"> Flash player screen on turn change</label>
+      <label class="tog"><input type="checkbox" id="optChime"> Chime on turn change (plays from this window)</label>
+      <label class="tog"><input type="checkbox" id="optShowTimer"> Show turn timer to players</label>
+      <label class="tog">Turn timer <input type="number" id="optTimerSec" min="0" step="5"> sec (0 = off)</label>
+      <button class="btn small" data-act="resetSession">Reset session clock</button>
+    </div>
+  </details>
+
+  <div class="layout">
+    <div class="main">
+      <div class="panel">
+        <div class="list-head">
+          <h2>Combatants</h2>
+          <div class="actions-row">
+            <button class="btn small" data-act="selMonsters">Select monsters</button>
+            <button class="btn small" data-act="selNone">Deselect</button>
+            <button class="btn small" data-act="resort" title="Re-sort by initiative and DEX tie-break">Re-sort</button>
+            <button class="btn small" id="clearDefBtn" data-act="clearDefeated">Clear defeated</button>
+          </div>
+        </div>
+        <div id="listWrap"></div>
+      </div>
+      <div id="bulkBar"></div>
+    </div>
+
+    <div class="panel side">
+      <div class="tabs">
+        <button class="tab on" data-act="tab" data-tab="add">Add</button>
+        <button class="tab" data-act="tab" data-tab="party">Party</button>
+        <button class="tab" data-act="tab" data-tab="bestiary">Bestiary</button>
+        <button class="tab" data-act="tab" data-tab="enc">Encounter</button>
+        <button class="tab" data-act="tab" data-tab="log">Log</button>
+      </div>
+
+      <div class="pane on" id="pane-add">
+        <div class="fgrid">
+          <div class="field span2"><label for="fName">Name</label><input id="fName" placeholder="e.g. Zombie, Artus Cimber"></div>
+          <div class="field"><label for="fType">Type</label>
+            <select id="fType">
+              <option value="monster" selected>Monster</option>
+              <option value="pc">PC</option>
+              <option value="npc">NPC / Ally</option>
+              <option value="lair">Lair action (init 20)</option>
+            </select>
+          </div>
+          <div class="field"><label for="fInit">Init (blank = roll)</label><input id="fInit" type="number" placeholder="14"></div>
+          <div class="field"><label for="fDex">DEX mod</label><input id="fDex" type="number" placeholder="+2"></div>
+          <div class="field"><label for="fAC">AC</label><input id="fAC" type="number" placeholder="13"></div>
+          <div class="field"><label for="fHP">HP or dice</label><input id="fHP" placeholder="27 or 5d8+10"></div>
+          <div class="field"><label for="fCR">CR (for XP)</label><input id="fCR" placeholder="1/4"></div>
+          <div class="field"><label for="fQty">Quantity</label><input id="fQty" type="number" value="1" min="1"></div>
+          <div class="field"><label for="fLeg">Legendary actions</label><input id="fLeg" type="number" value="0" min="0"></div>
+          <div class="field span2"><label for="fRch">Recharge abilities</label><input id="fRch" placeholder="Fire Breath 5, Poison Spray 6"></div>
+          <div class="field span3"><label for="fNotes">Notes (DM only)</label><input id="fNotes" placeholder="e.g. carries the amulet"></div>
+        </div>
+        <div class="checks">
+          <label class="tog"><input type="checkbox" id="fRollHp" checked> Roll HP from dice (otherwise use the average)</label>
+          <label class="tog"><input type="checkbox" id="fHidden"> Start hidden from players</label>
+          <label class="tog"><input type="checkbox" id="fGroup"> Same initiative for the whole group</label>
+        </div>
+        <div class="actions-row">
+          <button class="btn primary" data-act="add">+ Add to combat</button>
+          <button class="btn" data-act="rollInit">🎲 Roll init</button>
+          <button class="btn" data-act="saveTplForm">☆ Save as template</button>
+        </div>
+        <div class="hint">Leave Init blank to roll d20 + DEX mod for each creature. Type HP as a number or as hit dice. In the HP box on a card, type <kbd>-12</kbd> for damage, <kbd>+5</kbd> to heal, <kbd>t8</kbd> for temp HP, <kbd>=20</kbd> to set HP, then press Enter.</div>
+      </div>
+      <div class="pane" id="pane-party"></div>
+      <div class="pane" id="pane-bestiary"></div>
+      <div class="pane" id="pane-enc"></div>
+      <div class="pane" id="pane-log"></div>
+    </div>
+  </div>
+
+  <div class="footer-hint">
+    <kbd>Space</kbd> / <kbd>Enter</kbd> next turn · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo · <kbd>Esc</kbd> deselect<br>
+    Your combat saves automatically in this browser. Use Export to back it up or move it to another computer. Double-click the player window to go full screen.
+  </div>
+</div>
+</div>
+
+<!-- ======================= PLAYER VIEW ======================= -->
+<div id="playerRoot">
+  <div id="pvFlash"></div>
+  <div id="pvWrap"></div>
+</div>
+
+<div id="toasts"></div>
+<div id="modal"><div class="modal-card" id="modalBody"></div></div>
+<datalist id="condList"></datalist>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   Helpers & constants
+   ===================================================================== */
+const KEY = {state:'tt2_state', roster:'tt2_roster', tpl:'tt2_templates', pv:'tt2_pv'};
+const IS_PLAYER = new URLSearchParams(location.search).get('player') === '1';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const d = n => Math.floor(Math.random() * n) + 1;
+const pad = n => String(n).padStart(2, '0');
+const uid = () => 'x' + Math.random().toString(36).slice(2, 9);
+const signed = n => (n >= 0 ? '+' : '−') + Math.abs(n);
+const fmtDur = ms => { const s = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? h + ':' + pad(m) + ':' + pad(x) : m + ':' + pad(x); };
+const fmtClock = t => new Date(t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+const num = (v, def) => { const n = parseInt(v, 10); return isNaN(n) ? def : n; };
+
+function lsGet(k, fallback){ try{ const v = localStorage.getItem(k); return v == null ? fallback : JSON.parse(v); }catch(e){ return fallback; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+
+function hpColor(p){ return p > .5 ? 'var(--green)' : p > .25 ? 'var(--gold)' : 'var(--red-bright)'; }
+function hpBucket(p){ return p <= 0 ? 'Down' : p <= .25 ? 'Critical' : p <= .5 ? 'Bloodied' : p <= .75 ? 'Injured' : 'Healthy'; }
+
+const COND_INFO = {
+  'Blinded':'Can\'t see and automatically fails checks that need sight. Attacks against it have advantage; its attacks have disadvantage.',
+  'Charmed':'Can\'t attack the charmer or target it with harmful abilities or magic. The charmer has advantage on social checks against it.',
+  'Deafened':'Can\'t hear and automatically fails checks that need hearing.',
+  'Frightened':'Disadvantage on ability checks and attacks while the source of fear is in line of sight. Can\'t willingly move closer to the source.',
+  'Grappled':'Speed becomes 0. Ends if the grappler is incapacitated or the creature is moved out of the grappler\'s reach.',
+  'Incapacitated':'Can\'t take actions or reactions.',
+  'Invisible':'Can\'t be seen without magic or a special sense. Attacks against it have disadvantage; its attacks have advantage.',
+  'Paralyzed':'Incapacitated; can\'t move or speak. Automatically fails STR and DEX saves. Attacks against it have advantage, and hits from within 5 ft are critical hits.',
+  'Petrified':'Turned to stone: incapacitated, unaware, can\'t move or speak. Automatically fails STR and DEX saves. Attacks against it have advantage. Resistant to all damage; immune to poison and disease.',
+  'Poisoned':'Disadvantage on attack rolls and ability checks.',
+  'Prone':'Can only crawl, or stand up by spending half its movement. Disadvantage on its attacks. Attacks against it have advantage from within 5 ft, otherwise disadvantage.',
+  'Restrained':'Speed 0. Attacks against it have advantage; its attacks have disadvantage. Disadvantage on DEX saves.',
+  'Stunned':'Incapacitated; can\'t move and can speak only falteringly. Automatically fails STR and DEX saves. Attacks against it have advantage.',
+  'Unconscious':'Incapacitated; can\'t move or speak; unaware. Drops what it holds and falls prone. Automatically fails STR and DEX saves. Attacks against it have advantage, and hits from within 5 ft are critical hits.',
+  'Exhaustion 1':'Disadvantage on ability checks.',
+  'Exhaustion 2':'Speed halved (plus level 1 effects).',
+  'Exhaustion 3':'Disadvantage on attack rolls and saving throws (plus earlier levels).',
+  'Exhaustion 4':'Hit point maximum halved (plus earlier levels).',
+  'Exhaustion 5':'Speed reduced to 0 (plus earlier levels).',
+  'Exhaustion 6':'Death.'
+};
+const EXTRA_EFFECTS = ['Bless','Bane','Haste','Slow','Hex','Hunter\'s Mark','Faerie Fire','Burning'];
+
+const XP_TH = [null,[25,50,75,100],[50,100,150,200],[75,150,225,400],[125,250,375,500],[250,500,750,1100],[300,600,900,1400],[350,750,1100,1700],
+  [450,900,1400,2100],[550,1100,1600,2400],[600,1200,1900,2800],[800,1600,2400,3600],[1000,2000,3000,4500],[1100,2200,3400,5100],
+  [1250,2500,3800,5700],[1400,2800,4300,6400],[1600,3200,4800,7200],[2000,3900,5900,8800],[2100,4200,6300,9500],[2400,4900,7300,10900],[2800,5700,8500,12700]];
+const CR_XP = {'0':10,'1/8':25,'1/4':50,'1/2':100,'1':200,'2':450,'3':700,'4':1100,'5':1800,'6':2300,'7':2900,'8':3900,'9':5000,'10':5900,'11':7200,'12':8400,
+  '13':10000,'14':11500,'15':13000,'16':15000,'17':18000,'18':20000,'19':22000,'20':25000,'21':33000,'22':41000,'23':50000,'24':62000,'25':75000,
+  '26':90000,'27':105000,'28':120000,'29':135000,'30':155000};
+const MULTS = [0.5,1,1.5,2,2.5,3,4,5];
+
+const SEED_TEMPLATES = [
+  {name:'Zombie',ac:8,hp:'3d8+9',dex:-2,cr:'1/4'},
+  {name:'Skeleton',ac:13,hp:'2d8+4',dex:2,cr:'1/4'},
+  {name:'Ghoul',ac:12,hp:'5d8',dex:2,cr:'1'},
+  {name:'Stirge',ac:14,hp:'1d4',dex:3,cr:'1/8'},
+  {name:'Velociraptor',ac:13,hp:'3d4+3',dex:2,cr:'1/4'},
+  {name:'Pteranodon',ac:13,hp:'3d8',dex:3,cr:'1/4'},
+  {name:'Deinonychus',ac:13,hp:'4d8+8',dex:2,cr:'1'},
+  {name:'Allosaurus',ac:13,hp:'6d10+18',dex:0,cr:'2'},
+  {name:'Tyrannosaurus Rex',ac:13,hp:'13d12+52',dex:0,cr:'8'},
+  {name:'Yuan-ti Pureblood',ac:11,hp:'9d8',dex:1,cr:'1'},
+  {name:'Yuan-ti Malison',ac:12,hp:'12d8+12',dex:2,cr:'3'},
+  {name:'Yuan-ti Abomination',ac:15,hp:'15d10+45',dex:3,cr:'7'}
+];
+
+/* ---------- dice ---------- */
+const DICE_RE = /^\s*(\d+)\s*d\s*(\d+)\s*([+-]\s*\d+)?\s*$/i;
+function parseDice(s){ const m = String(s).match(DICE_RE); if(!m) return null; return {n:+m[1], s:+m[2], k:m[3] ? parseInt(m[3].replace(/\s+/g,''),10) : 0}; }
+function diceAvg(p){ return Math.floor(p.n * (p.s + 1) / 2) + p.k; }
+function diceRoll(p){ let t = p.k; for(let i = 0; i < p.n; i++) t += d(p.s); return t; }
+function resolveHp(hp, roll){
+  if(typeof hp === 'number') return Math.max(1, hp);
+  const p = parseDice(hp);
+  if(p) return Math.max(1, roll ? diceRoll(p) : diceAvg(p));
+  const n = parseInt(hp, 10);
+  return isNaN(n) ? 1 : Math.max(1, n);
+}
+function parseRch(str){
+  return String(str || '').split(',').map(x => x.trim()).filter(Boolean).map(x => {
+    const m = x.match(/^(.*?)\s*(\d)\s*(?:-\s*6)?$/);
+    return m && m[1] ? {name:m[1].trim(), min:clamp(+m[2], 2, 6)} : {name:x, min:5};
+  });
+}
+const rchStr = r => (r || []).map(x => x.name + ' ' + x.min).join(', ');
+
+/* =====================================================================
+   State model
+   ===================================================================== */
+function freshState(){
+  return {
+    v:2, nextId:1, round:1, started:false, currentId:null, turnSeq:0,
+    combatants:[], log:[], fights:[], xpEarned:0,
+    combatStartedAt:null, turnStartedAt:null, turnPausedAt:null,
+    settings:{pvPcNums:true, pvMonNums:false, pvLayout:'cards', flash:true, chime:true, showTimer:true, turnTimerSec:0, skipDefeated:true, partySize:4, partyLevel:1},
+    session:{start:Date.now(), last:Date.now()}
+  };
+}
+function normalizeCombatant(c){
+  c = c || {};
+  const type = ['pc','monster','npc','lair'].includes(c.type) ? c.type : 'monster';
+  const hpMax = type === 'lair' ? 0 : Math.max(1, num(c.hpMax, 1));
+  return {
+    id:num(c.id, 0), name:String(c.name || 'Unnamed'), type,
+    init:num(c.init != null ? c.init : c.initiative, 0), dex:type === 'lair' ? -99 : num(c.dex, 0),
+    ac:c.ac == null || c.ac === '' ? null : num(c.ac, null),
+    hpMax, hpCur:type === 'lair' ? 0 : clamp(num(c.hpCur, hpMax), 0, hpMax), tempHp:Math.max(0, num(c.tempHp, 0)),
+    conditions:Array.isArray(c.conditions) ? c.conditions.map(x => ({name:String(x.name), duration:x.duration == null ? null : num(x.duration, null)})) : [],
+    concentrating:!!c.concentrating, deathSuccess:clamp(num(c.deathSuccess, 0), 0, 3), deathFail:clamp(num(c.deathFail, 0), 0, 3),
+    legendaryMax:Math.max(0, num(c.legendaryMax, 0)), legendaryUsed:Math.max(0, num(c.legendaryUsed, 0)), reactionUsed:!!c.reactionUsed,
+    recharges:Array.isArray(c.recharges) ? c.recharges.map(r => ({name:String(r.name), min:clamp(num(r.min, 5), 2, 6), ready:r.ready !== false})) : [],
+    notes:String(c.notes || ''), hidden:!!c.hidden, cr:String(c.cr || ''), xp:Math.max(0, num(c.xp, 0)),
+    pp:c.pp == null || c.pp === '' ? null : num(c.pp, null), dc:c.dc == null || c.dc === '' ? null : num(c.dc, null), rosterId:c.rosterId || null
+  };
+}
+function cmp(a, b){ return (b.init - a.init) || (b.dex - a.dex) || (a.id - b.id); }
+function normalizeState(raw){
+  const s = freshState();
+  if(!raw || typeof raw !== 'object') return s;
+  const legacy = raw.v == null || raw.v < 2;
+  s.round = Math.max(1, num(raw.round, 1));
+  s.log = Array.isArray(raw.log) ? raw.log.filter(e => e && e.msg).map(e => ({t:e.t || Date.now(), r:e.r || 1, msg:String(e.msg)})).slice(0, 400) : [];
+  s.fights = Array.isArray(raw.fights) ? raw.fights : [];
+  s.xpEarned = Math.max(0, num(raw.xpEarned, 0));
+  s.combatants = (Array.isArray(raw.combatants) ? raw.combatants : []).map(normalizeCombatant);
+  let maxId = 0; s.combatants.forEach(c => { if(!c.id) c.id = ++maxId; maxId = Math.max(maxId, c.id); });
+  s.nextId = Math.max(num(raw.nextId, 1), maxId + 1);
+  const rs = raw.settings || {};
+  s.settings = Object.assign(s.settings, rs);
+  if(rs.pvPcNumbers != null) s.settings.pvPcNums = !!rs.pvPcNumbers;
+  if(rs.pvMonsterNumbers != null) s.settings.pvMonNums = !!rs.pvMonsterNumbers;
+  s.turnSeq = num(raw.turnSeq, 0);
+  s.combatStartedAt = raw.combatStartedAt || null; s.turnStartedAt = raw.turnStartedAt || null; s.turnPausedAt = raw.turnPausedAt || null;
+  if(legacy){
+    s.combatants.sort(cmp);
+    if(raw.turnIndex != null && s.combatants[raw.turnIndex]){ s.currentId = s.combatants[raw.turnIndex].id; s.started = s.combatants.length > 0; s.turnStartedAt = Date.now(); }
+  } else {
+    s.currentId = s.combatants.some(c => c.id === raw.currentId) ? raw.currentId : null;
+    s.started = !!raw.started && s.currentId != null;
+  }
+  if(raw.session && raw.session.start) s.session = {start:raw.session.start, last:raw.session.last || raw.session.start};
+  return s;
+}
+const normalizeRoster = r => ({id:r.id || uid(), name:String(r.name || 'PC'), level:clamp(num(r.level, 1), 1, 20), ac:num(r.ac, 10), hpMax:Math.max(1, num(r.hpMax, 1)),
+  hpCur:r.hpCur == null ? null : num(r.hpCur, null), dex:num(r.dex, 0), pp:r.pp == null || r.pp === '' ? null : num(r.pp, null), dc:r.dc == null || r.dc === '' ? null : num(r.dc, null)});
+const normalizeTpl = t => ({id:t.id || uid(), name:String(t.name || 'Monster'), ac:t.ac == null || t.ac === '' ? null : num(t.ac, null), hp:String(t.hp != null ? t.hp : '1'),
+  dex:num(t.dex, 0), cr:String(t.cr || ''), legendaryMax:Math.max(0, num(t.legendaryMax, 0)), recharges:Array.isArray(t.recharges) ? t.recharges : [], notes:String(t.notes || '')});
+
+/* =====================================================================
+   Player view (read-only window)
+   ===================================================================== */
+function initPlayer(){
+  document.body.classList.add('player-mode');
+  document.title = 'Tomb Tracker — Player View';
+  const wrap = $('#pvWrap');
+  let snap = null, lastJson = '', lastSeq = null;
+
+  function timerHtml(){ return '<div class="pv-timer" id="pvTimer"></div>'; }
+  function drawCards(s){
+    const curName = s.currentHidden ? 'Something stirs…' : (s.curName || '—');
+    let h = '<div class="pv-header"><div class="pv-glyph"><div class="num">' + s.round + '</div><div class="lbl">ROUND</div></div>' +
+      '<div class="pv-turn"><div class="l">CURRENT TURN</div><div class="v">' + esc(s.started ? curName : '—') + '</div>' + timerHtml() + '</div></div>';
+    if(!s.started){ h += '<div class="pv-empty">Roll for initiative!</div>'; }
+    else if(!s.list.length){ h += '<div class="pv-empty">The dust settles…</div>'; }
+    else {
+      h += s.list.map(c => {
+        const conds = c.conds.map(x => '<span class="pv-cond">' + esc(x) + '</span>').join('');
+        const lab = c.down || c.dead ? '<span class="pv-down-tag">' + esc(c.label) + '</span>' : esc(c.label);
+        return '<div class="pv-card type-' + c.type + (c.cur ? ' current' : '') + (c.down ? ' pv-down' : '') + '" data-pid="' + c.id + '">' +
+          '<div><div class="pv-name-row"><span class="pv-name">' + esc(c.name) + '</span>' + (c.next ? '<span class="pv-next">NEXT</span>' : '') +
+          (c.conc ? '<span class="pv-conc">Concentrating</span>' : '') + '</div><div class="pv-conditions">' + conds + '</div></div>' +
+          '<div><div class="pv-hp-track"><div class="pv-hp-fill" style="width:' + (c.pct * 100) + '%;background:' + hpColor(c.pct) + '"></div></div>' +
+          '<div class="pv-hp-label">' + lab + '</div></div></div>';
+      }).join('');
+    }
+    wrap.innerHTML = '<div class="pv-wrap">' + h + '</div>';
+  }
+  function drawRibbon(s){
+    const items = s.list.filter(c => !c.down || c.type === 'pc');
+    let h = '<div class="rb"><div class="rb-round"><div class="n">' + s.round + '</div><div class="l">ROUND</div></div>';
+    if(!s.started) h += '<div class="rb-list"><div class="pv-empty" style="padding:0 20px;align-self:center;font-size:clamp(16px,4vh,28px)">Roll for initiative!</div></div>';
+    else h += '<div class="rb-list">' + items.map(c => {
+      const shown = c.conds.slice(0, 3).map(x => '<span>' + esc(x) + '</span>').join('') + (c.conds.length > 3 ? '<span>+' + (c.conds.length - 3) + '</span>' : '');
+      return '<div class="rb-item type-' + c.type + (c.cur ? ' current' : '') + (c.down ? ' down' : '') + '" data-pid="' + c.id + '">' +
+        (c.cur ? '<span class="rb-tag">NOW</span>' : c.next ? '<span class="rb-tag" style="background:var(--ivory-dim)">NEXT</span>' : '') +
+        '<div class="rb-name">' + esc(c.name) + '</div><div class="rb-hpbar"><div style="width:' + (c.pct * 100) + '%;background:' + hpColor(c.pct) + '"></div></div>' +
+        '<div class="rb-sub"><span>' + esc(c.label) + '</span>' + (c.conc ? '<span>◎</span>' : '') + '</div>' +
+        (shown ? '<div class="rb-conds">' + shown + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+    h += '<div class="rb-timer" id="pvTimer"></div></div>';
+    wrap.innerHTML = h;
+    const cur = wrap.querySelector('.rb-item.current');
+    if(cur && cur.scrollIntoView){ try{ cur.scrollIntoView({block:'nearest', inline:'center'}); }catch(e){} }
+  }
+  function draw(){
+    const s = snap || {round:1, started:false, list:[], layout:'cards'};
+    document.body.classList.toggle('ribbon', s.layout === 'ribbon');
+    if(s.layout === 'ribbon') drawRibbon(s); else drawCards(s);
+    updateTimer();
+  }
+  function updateTimer(){
+    const el = $('#pvTimer'); if(!el) return;
+    const t = snap && snap.timer;
+    if(!t || !t.start){ el.textContent = ''; el.classList.remove('low'); return; }
+    const el_ = (t.paused || Date.now()) - t.start, left = t.sec * 1000 - el_;
+    el.textContent = (t.paused ? '❚❚ ' : '') + fmtDur(Math.max(0, left));
+    el.classList.toggle('low', left <= 10000 && !t.paused);
+  }
+  function flash(){
+    const f = $('#pvFlash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    const cur = wrap.querySelector('.pv-card.current, .rb-item.current');
+    if(cur){ cur.classList.remove('go'); void cur.offsetWidth; cur.classList.add('go'); }
+  }
+  function onSnap(s){
+    if(!s || typeof s !== 'object' || !Array.isArray(s.list)) return;
+    const j = JSON.stringify(s); if(j === lastJson) return;
+    const prev = lastSeq; lastJson = j; snap = s; lastSeq = s.turnSeq;
+    draw();
+    if(prev !== null && s.turnSeq !== prev && s.flash && s.started) flash();
+  }
+
+  window.addEventListener('message', e => { if(e.data && e.data.type === 'sync') onSnap(e.data.snap); });
+  window.addEventListener('storage', e => { if(e.key === KEY.pv && e.newValue){ try{ onSnap(JSON.parse(e.newValue)); }catch(err){} } });
+  document.addEventListener('dblclick', () => {
+    try{ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(e){}
+  });
+  onSnap(lsGet(KEY.pv, null));
+  if(!snap) draw();
+  const ask = () => { if(window.opener){ try{ window.opener.postMessage({type:'request'}, '*'); }catch(e){} } };
+  ask(); setTimeout(ask, 400);
+  setInterval(updateTimer, 250);
+}
+
+/* =====================================================================
+   DM view
+   ===================================================================== */
+let state = freshState(), roster = [], templates = [];
+const undoStack = [], redoStack = [];
+const selected = new Set(), bulkModes = {};
+let activeTab = 'add', editingRoster = null, editingTpl = null, editingNote = null;
+let playerWin = null, dragId = null, buzzedSeq = -1, actx = null, hadSaved = false;
+
+/* ---------- persistence ---------- */
+function setSaveInd(ok){
+  const el = $('#saveInd'); if(!el) return;
+  el.classList.toggle('bad', !ok);
+  el.textContent = ok ? '· saved ' + fmtClock(Date.now()) : '· autosave unavailable — use Export to keep your data';
+}
+function save(){ state.session.last = Date.now(); setSaveInd(lsSet(KEY.state, state)); }
+const saveRoster = () => lsSet(KEY.roster, roster);
+const saveTemplates = () => lsSet(KEY.tpl, templates);
+function loadAll(){
+  const raw = lsGet(KEY.state, null);
+  hadSaved = !!raw;
+  state = normalizeState(raw);
+  const now = Date.now();
+  if(!raw || now - state.session.last > 8 * 3600 * 1000) state.session = {start:now, last:now};
+  roster = (lsGet(KEY.roster, []) || []).map(normalizeRoster);
+  let t = lsGet(KEY.tpl, null);
+  if(!Array.isArray(t)){ t = SEED_TEMPLATES.map(x => Object.assign({id:uid()}, x)); lsSet(KEY.tpl, t); }
+  templates = t.map(normalizeTpl);
+}
+
+/* ---------- log / undo ---------- */
+function addLog(msg){ state.log.unshift({t:Date.now(), r:state.round, msg}); if(state.log.length > 400) state.log.length = 400; }
+function snapJson(){ const o = Object.assign({}, state); delete o.settings; delete o.session; return JSON.stringify(o); }
+function pushUndo(label){ undoStack.push({label, data:snapJson()}); if(undoStack.length > 60) undoStack.shift(); redoStack.length = 0; }
+function restore(json){ Object.assign(state, JSON.parse(json)); for(const id of Array.from(selected)) if(!findById(id)) selected.delete(id); }
+function undo(){
+  const e = undoStack.pop(); if(!e) return;
+  redoStack.push({label:e.label, data:snapJson()}); restore(e.data); afterChange();
+  notify('Undid: ' + esc(e.label), {ttl:2500});
+}
+function redo(){
+  const e = redoStack.pop(); if(!e) return;
+  undoStack.push({label:e.label, data:snapJson()}); restore(e.data); afterChange();
+  notify('Redid: ' + esc(e.label), {ttl:2500});
+}
+function mutate(label, fn){ pushUndo(label); fn(); afterChange(); }
+function afterChange(){ render(); save(); broadcast(); }
+
+/* ---------- toasts / modal / sound ---------- */
+function notify(html, o){
+  o = o || {}; const kind = o.kind || 'info', ttl = o.ttl == null ? 9000 : o.ttl;
+  const box = $('#toasts'); if(!box) return null;
+  const el = document.createElement('div'); el.className = 'toast ' + kind;
+  el.innerHTML = '<div class="tmsg">' + html + '</div><div class="tacts"></div><button class="tx" aria-label="Dismiss">✕</button>';
+  const ta = el.querySelector('.tacts');
+  (o.actions || []).forEach(a => {
+    const b = document.createElement('button'); b.className = 'btn small'; b.textContent = a.label;
+    b.addEventListener('click', () => { try{ if(a.fn) a.fn(); } finally { el.remove(); } });
+    ta.appendChild(b);
+  });
+  if(!(o.actions || []).length) ta.remove();
+  el.querySelector('.tx').addEventListener('click', () => el.remove());
+  box.appendChild(el);
+  while(box.children.length > 6) box.firstChild.remove();
+  if(ttl > 0) setTimeout(() => el.remove(), ttl);
+  return el;
+}
+function openModal(html){ $('#modalBody').innerHTML = html; $('#modal').classList.add('open'); }
+function closeModal(){ $('#modal').classList.remove('open'); }
+function chime(kind){
+  if(!state.settings.chime) return;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    actx = actx || new AC(); if(actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime, seq = kind === 'buzz' ? [[220, 0], [185, .17]] : [[660, 0], [880, .11]];
+    seq.forEach(p => {
+      const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = p[0];
+      g.gain.setValueAtTime(.0001, t0 + p[1]); g.gain.exponentialRampToValueAtTime(.07, t0 + p[1] + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + p[1] + .22);
+      o.connect(g); g.connect(actx.destination); o.start(t0 + p[1]); o.stop(t0 + p[1] + .25);
+    });
+  }catch(e){}
+}
+
+/* ---------- lookups ---------- */
+const findById = id => state.combatants.find(c => c.id === id) || null;
+const getCurrent = () => findById(state.currentId);
+const isDefeated = c => c.type !== 'lair' && c.hpMax > 0 && c.hpCur <= 0;
+const isDead = c => c.type === 'pc' && c.deathFail >= 3;
+function skippable(c){
+  if(!state.settings.skipDefeated) return false;
+  if(c.type === 'lair') return false;
+  if(c.type === 'pc') return isDead(c);
+  return isDefeated(c);
+}
+function insertSorted(c){
+  const arr = state.combatants; let i = arr.findIndex(x => cmp(c, x) < 0);
+  if(i < 0) i = arr.length; arr.splice(i, 0, c);
+}
+function uniqueName(base, forceNum){
+  const re = new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?: (\\d+))?$');
+  let max = 0, any = false;
+  state.combatants.forEach(c => { const m = c.name.match(re); if(m){ any = true; max = Math.max(max, m[1] ? +m[1] : 1); } });
+  return (!any && !forceNum) ? base : base + ' ' + (max + 1);
+}
+
+/* ---------- turn engine (tracks the current creature by identity) ---------- */
+function advance(dir, fromIdx){
+  const arr = state.combatants, n = arr.length;
+  for(let i = 1; i <= n; i++){
+    const raw = fromIdx + dir * i, j = ((raw % n) + n) % n, c = arr[j];
+    if(skippable(c)) continue;
+    return {c, wrapped:raw >= n || raw < 0};
+  }
+  return null;
+}
+function tickRoundStart(){
+  state.combatants.forEach(c => {
+    c.conditions = c.conditions.filter(cond => {
+      if(cond.duration == null) return true;
+      cond.duration--;
+      if(cond.duration <= 0){ addLog(c.name + ': "' + cond.name + '" expired'); return false; }
+      return true;
+    });
+  });
+}
+function beginTurn(c){
+  state.turnStartedAt = Date.now(); state.turnPausedAt = null; state.turnSeq++;
+  c.reactionUsed = false; c.legendaryUsed = 0;
+  addLog('Turn: ' + c.name);
+  c.recharges.filter(r => !r.ready).forEach(r => {
+    notify('<b>' + esc(c.name) + '</b>: ' + esc(r.name) + ' hasn\'t recharged. Roll d6 (recharges on ' + r.min + (r.min < 6 ? '–6' : '') + ').',
+      {kind:'warn', ttl:0, actions:[{label:'Roll d6', fn:() => rollRecharge(c.id, r.name)}]});
+  });
+}
+function startCombat(){
+  if(!state.combatants.length) return;
+  mutate('Start combat', () => {
+    const r = advance(1, -1); if(!r) return;
+    state.started = true; state.round = 1; state.xpEarned = 0; state.combatStartedAt = Date.now(); state.currentId = r.c.id;
+    addLog('Combat begins'); beginTurn(r.c);
+  });
+  chime('turn');
+}
+function nextTurn(){
+  if(!state.started){ startCombat(); return; }
+  if(!state.combatants.length) return;
+  mutate('Next turn', () => {
+    const idx = state.combatants.findIndex(c => c.id === state.currentId);
+    const r = advance(1, idx); if(!r) return;
+    state.currentId = r.c.id;
+    if(r.wrapped){ state.round++; tickRoundStart(); addLog('— Round ' + state.round + ' begins —'); }
+    beginTurn(r.c);
+  });
+  chime('turn');
+}
+function prevTurn(){
+  if(!state.started || !state.combatants.length) return;
+  mutate('Previous turn', () => {
+    const idx = state.combatants.findIndex(c => c.id === state.currentId);
+    const r = advance(-1, idx < 0 ? state.combatants.length : idx); if(!r) return;
+    state.currentId = r.c.id; if(r.wrapped) state.round = Math.max(1, state.round - 1);
+    state.turnStartedAt = Date.now(); state.turnPausedAt = null; state.turnSeq++;
+    addLog('Back to: ' + r.c.name);
+  });
+}
+function togglePause(){
+  if(!state.started || !state.turnStartedAt) return;
+  const now = Date.now();
+  if(state.turnPausedAt){ state.turnStartedAt += now - state.turnPausedAt; state.turnPausedAt = null; } else state.turnPausedAt = now;
+  renderHeader(); save(); broadcast();
+}
+
+/* ---------- combat mechanics ---------- */
+function applyDamage(c, amt){
+  amt = Math.max(0, Math.floor(amt)); if(!amt || c.type === 'lair') return;
+  const wasZero = c.hpCur <= 0, prevHp = c.hpCur; let rest = amt;
+  if(c.tempHp > 0){ const ab = Math.min(c.tempHp, rest); c.tempHp -= ab; rest -= ab; }
+  c.hpCur = Math.max(0, c.hpCur - rest);
+  addLog(c.name + ' takes ' + amt + ' damage' + (amt !== rest ? ' (' + (amt - rest) + ' absorbed by temp HP)' : '') + ' → ' + c.hpCur + '/' + c.hpMax);
+  if(c.concentrating){
+    if(c.hpCur <= 0){ c.concentrating = false; addLog(c.name + ' drops to 0 HP — concentration ends'); notify('<b>' + esc(c.name) + '</b> drops to 0 HP. Concentration ends.', {kind:'conc'}); }
+    else {
+      const dc = Math.max(10, Math.floor(amt / 2)), id = c.id;
+      notify('<b>' + esc(c.name) + '</b> took ' + amt + ' damage: CON save <b>DC ' + dc + '</b> to keep concentration.',
+        {kind:'conc', ttl:0, actions:[{label:'Failed — drop it', fn:() => mutate('Drop concentration', () => { const x = findById(id); if(x){ x.concentrating = false; addLog(x.name + ' loses concentration'); } })}, {label:'Held'}]});
+    }
+  }
+  if(!wasZero && c.hpCur <= 0){
+    if(c.type === 'pc'){
+      addLog(c.name + ' drops to 0 HP!');
+      if(rest - prevHp >= c.hpMax){ c.deathFail = 3; addLog(c.name + ' is killed outright by massive damage'); }
+    } else addLog(c.name + ' is defeated');
+  } else if(wasZero && c.type === 'pc' && rest > 0 && c.deathFail < 3){
+    if(amt >= c.hpMax){ c.deathFail = 3; addLog(c.name + ' is killed outright by massive damage'); }
+    else {
+      c.deathFail = Math.min(3, c.deathFail + 1); const id = c.id;
+      addLog(c.name + ' takes damage at 0 HP — death save failure (' + c.deathFail + '/3)');
+      notify('<b>' + esc(c.name) + '</b> took damage at 0 HP: +1 death save failure.',
+        {kind:'bad', ttl:0, actions:[{label:'It was a crit (+1 more)', fn:() => mutate('Extra death save failure', () => { const x = findById(id); if(x) x.deathFail = Math.min(3, x.deathFail + 1); })}, {label:'OK'}]});
+    }
+  }
+}
+function applyHeal(c, amt){
+  amt = Math.max(0, Math.floor(amt)); if(!amt || c.type === 'lair') return;
+  if(c.hpCur <= 0 && c.type === 'pc'){ c.deathSuccess = 0; c.deathFail = 0; }
+  c.hpCur = Math.min(c.hpMax, c.hpCur + amt);
+  addLog(c.name + ' heals ' + amt + ' → ' + c.hpCur + '/' + c.hpMax);
+}
+function parseHpCommand(str){
+  const s = String(str || '').trim(); let m;
+  if((m = s.match(/^[-−–]\s*(\d+)$/))) return {kind:'dmg', n:+m[1]};
+  if((m = s.match(/^\+\s*(\d+)$/))) return {kind:'heal', n:+m[1]};
+  if((m = s.match(/^t\s*(\d+)$/i))) return {kind:'temp', n:+m[1]};
+  if((m = s.match(/^=\s*(\d+)$/))) return {kind:'set', n:+m[1]};
+  if((m = s.match(/^(\d+)$/))) return {kind:'dmg', n:+m[1]};
+  return null;
+}
+function runHp(id, cmd){
+  const c = findById(id); if(!c || !cmd) return;
+  const label = c.name + ': ' + ({dmg:'damage', heal:'heal', temp:'temp HP', set:'set HP'}[cmd.kind]) + ' ' + cmd.n;
+  mutate(label, () => {
+    if(cmd.kind === 'dmg') applyDamage(c, cmd.n);
+    else if(cmd.kind === 'heal') applyHeal(c, cmd.n);
+    else if(cmd.kind === 'temp'){ c.tempHp = Math.max(c.tempHp, cmd.n); addLog(c.name + ' gains ' + cmd.n + ' temp HP'); }
+    else if(cmd.kind === 'set'){
+      const was = c.hpCur; c.hpCur = clamp(cmd.n, 0, c.hpMax); addLog(c.name + ' HP set to ' + c.hpCur + '/' + c.hpMax);
+      if(was <= 0 && c.hpCur > 0 && c.type === 'pc'){ c.deathSuccess = 0; c.deathFail = 0; }
+    }
+  });
+}
+function addCondition(c, name, dur){
+  name = name.trim(); if(!name) return;
+  const ex = c.conditions.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if(ex) ex.duration = dur; else c.conditions.push({name, duration:dur});
+  addLog(c.name + ': "' + name + '" applied' + (dur ? ' (' + dur + ' rounds)' : ''));
+}
+function rollRecharge(id, name){
+  mutate('Recharge roll', () => {
+    const c = findById(id); if(!c) return; const r = c.recharges.find(x => x.name === name); if(!r) return;
+    const roll = d(6); r.ready = roll >= r.min;
+    addLog(c.name + ' rolls recharge for ' + r.name + ': ' + roll + (r.ready ? ' — recharged!' : ' — not yet'));
+    notify('<b>' + esc(c.name) + '</b> — ' + esc(r.name) + ': rolled <b>' + roll + '</b>, ' + (r.ready ? 'recharged!' : 'still recharging.'), {kind:r.ready ? 'info' : 'warn', ttl:6000});
+  });
+}
+function removeCombatant(id){
+  const arr = state.combatants, idx = arr.findIndex(c => c.id === id); if(idx < 0) return;
+  const c = arr[idx], wasCur = state.currentId === id;
+  if(c.type === 'monster' && isDefeated(c)) state.xpEarned += c.xp || 0;
+  arr.splice(idx, 1); selected.delete(id); addLog(c.name + ' removed from combat');
+  if(wasCur){
+    const r = arr.length ? advance(1, idx - 1) : null;
+    if(!r){ state.currentId = null; }
+    else {
+      state.currentId = r.c.id;
+      if(r.wrapped){ state.round++; tickRoundStart(); addLog('— Round ' + state.round + ' begins —'); }
+      beginTurn(r.c);
+    }
+  }
+}
+function reorder(id, targetId, after){
+  const arr = state.combatants, from = arr.findIndex(c => c.id === id); if(from < 0 || id === targetId) return;
+  const c = arr.splice(from, 1)[0]; let to = arr.findIndex(x => x.id === targetId); if(to < 0){ arr.splice(from, 0, c); return; }
+  if(after) to++; arr.splice(to, 0, c);
+  const prev = arr[to - 1], next = arr[to + 1];
+  if(prev && c.init > prev.init) c.init = prev.init;
+  if(next && c.init < next.init) c.init = next.init;
+}
+function makeCombatant(o){
+  const type = o.type || 'monster', lair = type === 'lair';
+  const hp = lair ? 0 : Math.max(1, num(o.hpMax, 1));
+  return normalizeCombatant({
+    id:state.nextId++, name:o.name, type, init:lair ? 20 : o.init, dex:lair ? -99 : o.dex, ac:lair ? null : o.ac, hpMax:hp, hpCur:o.hpCur != null ? o.hpCur : hp,
+    legendaryMax:o.legendaryMax, recharges:(o.recharges || []).map(r => ({name:r.name, min:r.min, ready:true})), notes:lair && !o.notes ? 'Acts on initiative 20 each round' : o.notes,
+    hidden:o.hidden, cr:o.cr, xp:o.xp != null ? o.xp : (CR_XP[String(o.cr || '').trim()] || 0), pp:o.pp, dc:o.dc, rosterId:o.rosterId
+  });
+}
+function addCombatants(spec, qty, opts){
+  opts = opts || {}; let groupRoll = null, added = 0;
+  for(let i = 0; i < qty; i++){
+    let init = spec.init;
+    if(spec.type === 'lair') init = 20;
+    else if(init == null || init === ''){
+      if(opts.groupInit){ if(groupRoll == null) groupRoll = d(20) + (spec.dex || 0); init = groupRoll; } else init = d(20) + (spec.dex || 0);
+    }
+    const hp = spec.type === 'lair' ? 0 : resolveHp(spec.hp, opts.rollHp !== false);
+    const name = uniqueName(spec.name, qty > 1);
+    const c = makeCombatant(Object.assign({}, spec, {name, init:+init, hpMax:hp, hpCur:spec.hpCur != null ? Math.min(spec.hpCur, hp) : null, hidden:!!opts.hidden}));
+    insertSorted(c); added++;
+    addLog(c.name + ' joins (init ' + c.init + (c.type === 'lair' ? '' : ', HP ' + c.hpMax) + ')' + (c.hidden ? ' — hidden' : ''));
+  }
+  return added;
+}
+
+/* ---------- encounter maths (2014 DMG) ---------- */
+function encMult(n, party){
+  if(n <= 0) return 0;
+  let i = n === 1 ? 1 : n === 2 ? 2 : n <= 6 ? 3 : n <= 10 ? 4 : n <= 14 ? 5 : 6;
+  if(party < 3) i++; else if(party >= 6) i--;
+  return MULTS[clamp(i, 0, MULTS.length - 1)];
+}
+function encStats(){
+  const st = state.settings, size = clamp(num(st.partySize, 4), 1, 12), lvl = clamp(num(st.partyLevel, 1), 1, 20), th = XP_TH[lvl];
+  const thr = {easy:th[0] * size, medium:th[1] * size, hard:th[2] * size, deadly:th[3] * size};
+  const mons = state.combatants.filter(c => c.type === 'monster');
+  const base = mons.reduce((s, c) => s + (c.xp || 0), 0), mult = encMult(mons.length, size), adj = Math.round(base * mult);
+  let label = mons.length ? 'Trivial' : '—';
+  if(mons.length){ if(adj >= thr.deadly) label = 'Deadly'; else if(adj >= thr.hard) label = 'Hard'; else if(adj >= thr.medium) label = 'Medium'; else if(adj >= thr.easy) label = 'Easy'; }
+  const earned = state.xpEarned + mons.filter(isDefeated).reduce((s, c) => s + (c.xp || 0), 0);
+  const pcs = state.combatants.filter(c => c.type === 'pc').length || size;
+  return {size, lvl, thr, mons:mons.length, base, mult, adj, label, earned, pcs, share:Math.floor(earned / pcs), noXp:mons.filter(c => !c.xp).length};
+}
+
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+function withPreserve(fn){
+  const vals = {}; $$('[data-keep]').forEach(el => { if(el.id) vals[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+  const ae = document.activeElement, aid = ae && ae.id; let sel = null;
+  try{ if(ae && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; }catch(e){}
+  fn();
+  Object.keys(vals).forEach(id => { const el = document.getElementById(id); if(!el) return; if(el.type === 'checkbox') el.checked = vals[id]; else el.value = vals[id]; });
+  if(aid){ const el = document.getElementById(aid); if(el && el.focus){ el.focus(); if(sel){ try{ el.setSelectionRange(sel[0], sel[1]); }catch(e){} } } }
+}
+function render(){
+  withPreserve(() => {
+    renderHeader(); renderList(); renderBulk();
+    if(activeTab === 'enc') $('#pane-enc').innerHTML = paneEnc();
+    if(activeTab === 'log') $('#pane-log').innerHTML = paneLog();
+  });
+  if(editingNote != null){ const el = document.getElementById('note-' + editingNote); if(el){ el.focus(); } }
+}
+function renderHeader(){
+  $('#roundNum').textContent = state.round;
+  const cur = getCurrent();
+  $('#curName').textContent = cur ? cur.name : (state.started ? '—' : 'Not started');
+  $('#nextTurnBtn').textContent = state.started ? 'Next Turn ▶' : (state.combatants.length ? 'Start Combat ▶' : 'Next Turn ▶');
+  const u = $('#undoBtn'), r = $('#redoBtn');
+  u.disabled = !undoStack.length; u.title = undoStack.length ? 'Undo: ' + undoStack[undoStack.length - 1].label + ' (Ctrl+Z)' : 'Nothing to undo';
+  r.disabled = !redoStack.length; r.title = redoStack.length ? 'Redo: ' + redoStack[redoStack.length - 1].label : 'Nothing to redo';
+  $('#endBtn').style.display = state.started ? '' : 'none';
+  $('#pauseBtn').textContent = state.turnPausedAt ? 'Resume' : 'Pause';
+  const n = state.combatants.filter(c => c.type !== 'pc' && c.type !== 'lair' && isDefeated(c)).length;
+  $('#clearDefBtn').textContent = 'Clear defeated' + (n ? ' (' + n + ')' : ''); $('#clearDefBtn').disabled = !n;
+}
+
+function cardHtml(c, cur){
+  const id = c.id, isCur = cur && cur.id === id, lair = c.type === 'lair', down = isDefeated(c), dead = isDead(c);
+  const pct = lair ? 1 : clamp(c.hpCur / c.hpMax, 0, 1), sel = selected.has(id);
+  const cls = ['combatant', 'type-' + c.type, isCur ? 'current' : '', down ? 'down' : '', c.hidden ? 'is-hidden' : '', sel ? 'selected' : ''].join(' ');
+  const chips = (c.pp != null ? '<span class="chip" title="Passive Perception">PP ' + c.pp + '</span>' : '') + (c.dc != null ? '<span class="chip" title="Spell save DC">DC ' + c.dc + '</span>' : '') +
+    (c.type === 'monster' && c.cr ? '<span class="chip" title="Challenge rating">CR ' + esc(c.cr) + '</span>' : '') + (c.hidden ? '<span class="chip hid">HIDDEN</span>' : '');
+  const hp = lair ? '<div></div>' :
+    '<div class="hp-col"><div class="hp-bar-track"><div class="hp-bar-fill" style="width:' + pct * 100 + '%;background:' + hpColor(pct) + '"></div></div>' +
+    '<div class="hp-nums"><span class="hp-text">' + c.hpCur + '/' + c.hpMax + (c.tempHp > 0 ? ' <span style="color:var(--steel)">+' + c.tempHp + '</span>' : '') + '</span>' +
+    '<input class="hp-input" id="amt-' + id + '" data-keep data-enter="hpcmd" placeholder="±HP" title="12 or -12 = damage · +5 = heal · t8 = temp HP · =20 = set HP (Enter)">' +
+    '<button class="btn small danger" data-act="dmg" title="Damage">−</button><button class="btn small" data-act="heal" title="Heal">+</button></div></div>';
+  const ac = lair ? '<div></div>' : '<div class="ac-col"><div class="ac-shield">' + (c.ac != null ? c.ac : '—') + '</div><div class="ac-lbl">AC</div></div>';
+  const top = '<div class="card-top"><div class="lead">' + (lair ? '' : '<input type="checkbox" class="selbox" data-change="select" ' + (sel ? 'checked ' : '') + 'aria-label="Select ' + esc(c.name) + '" title="Select for group damage">') +
+    '<span class="drag" draggable="true" data-drag title="Drag to reorder (delay or ready an action)">⋮⋮</span></div>' +
+    '<input class="init-edit" type="number" value="' + c.init + '" data-change="init" title="Initiative — edit to re-sort">' +
+    '<div class="name-col"><div class="name-row"><span class="cname">' + esc(c.name) + '</span><span class="type-tag ' + c.type + '">' + (c.type === 'npc' ? 'NPC' : c.type) + '</span>' +
+    (lair ? '' : '<span class="conc-flag ' + (c.concentrating ? 'on' : '') + '" data-act="conc" title="Toggle concentration">Concentrating</span>') + chips + '</div></div>' + hp + ac + '</div>';
+
+  let b = '';
+  if(!lair){
+    b += '<div class="conditions">' + c.conditions.map(cond => {
+      const tip = COND_INFO[cond.name] || 'Custom effect.';
+      return '<span class="cond-tag tip" data-act="rmcond" data-cond="' + esc(cond.name) + '" data-tip="' + esc(tip + ' (Click to remove.)') + '">' + esc(cond.name) + (cond.duration != null ? ' (' + cond.duration + ')' : '') + ' ✕</span>';
+    }).join('') +
+    '<input class="cond-in" id="cin-' + id + '" data-keep list="condList" placeholder="+ condition" data-enter="addcond"><input class="cond-dur" id="cdur-' + id + '" data-keep type="number" placeholder="rds" data-enter="addcond">' +
+    '<button class="mini" data-act="addcond">add</button></div>';
+    b += '<button class="mini ' + (c.reactionUsed ? 'used' : 'ok') + '" data-act="react" title="Reaction (resets at the start of its turn)">Reaction: ' + (c.reactionUsed ? 'used' : 'ready') + '</button>';
+    if(c.legendaryMax > 0){
+      let pips = ''; for(let i = 0; i < c.legendaryMax; i++) pips += '<button class="lpip ' + (i >= c.legendaryMax - c.legendaryUsed ? 'spent' : '') + '" data-act="legpip" data-idx="' + i + '" aria-label="Legendary action"></button>';
+      b += '<span class="lpips" title="Legendary actions (regained at the start of its turn)">Legendary ' + pips + '</span>';
+    }
+    b += c.recharges.map((r, i) => '<span class="rch ' + (r.ready ? 'ready' : 'spent') + '">' + esc(r.name) + ' (' + r.min + (r.min < 6 ? '–6' : '') + ')' +
+      '<button class="mini" data-act="rch" data-idx="' + i + '">' + (r.ready ? 'Used' : 'Roll d6') + '</button></span>').join('');
+    if(c.type === 'pc' && down){
+      const s = [0, 1, 2].map(i => '<span class="pip success ' + (i < c.deathSuccess ? 'on' : '') + '" data-act="ds" data-kind="success" data-idx="' + i + '"></span>').join('');
+      const f = [0, 1, 2].map(i => '<span class="pip fail ' + (i < c.deathFail ? 'on' : '') + '" data-act="ds" data-kind="fail" data-idx="' + i + '"></span>').join('');
+      b += '<span class="ds">' + (dead ? '<span class="deadtag">DEAD</span>' : '') + 'Saves <span class="pip-row">' + s + '</span><span class="pip-row">' + f + '</span>' +
+        '<button class="mini ok" data-act="dsAdd" data-kind="success">+S</button><button class="mini used" data-act="dsAdd" data-kind="fail">+F</button>' +
+        '<button class="mini ok" data-act="nat20" title="Natural 20: back up at 1 HP">Nat 20</button><button class="mini used" data-act="nat1" title="Natural 1: two failures">Nat 1</button></span>';
+    }
+  }
+  b += editingNote === id ? '<input class="note-in" id="note-' + id + '" data-keep data-change="note" data-enter="note" value="' + esc(c.notes) + '" placeholder="Note…">' :
+    '<span class="note" data-act="editnote" title="Click to edit note">' + (c.notes ? esc(c.notes) : '＋ note') + '</span>';
+  b += '<span class="spacer"></span>';
+  if(!lair) b += '<button class="mini ' + (c.hidden ? 'warn' : '') + '" data-act="hide" title="Hide from or reveal to the player view">' + (c.hidden ? '👁 Reveal' : 'Hide') + '</button>';
+  if(c.type === 'monster') b += '<button class="mini" data-act="savetpl" title="Save as a Bestiary template">☆ Template</button>';
+  b += '<button class="mini used" data-act="remove">Remove</button>';
+  return '<div class="' + cls + '" data-id="' + id + '">' + top + '<div class="card-bottom">' + b + '</div></div>';
+}
+function renderList(){
+  const cur = getCurrent(), wrap = $('#listWrap');
+  wrap.innerHTML = state.combatants.length ? state.combatants.map(c => cardHtml(c, cur)).join('') :
+    '<div class="empty">No combatants yet. Add them from the Add tab, load your Party, or pick from the Bestiary — then press Start Combat.</div>';
+}
+function renderBulk(){
+  const el = $('#bulkBar'), sel = Array.from(selected).map(findById).filter(Boolean);
+  if(!sel.length){ el.classList.remove('open'); el.innerHTML = ''; return; }
+  el.classList.add('open');
+  const modes = [['full', 'full'], ['half', 'half (saved / resist)'], ['double', '×2 (vulnerable)'], ['none', 'none']];
+  el.innerHTML = '<div class="bulk-row"><strong>' + sel.length + ' selected</strong>' +
+    sel.map(c => '<span class="bt" data-id="' + c.id + '">' + esc(c.name) + '<select data-change="bulkmode">' +
+      modes.map(m => '<option value="' + m[0] + '"' + ((bulkModes[c.id] || 'full') === m[0] ? ' selected' : '') + '>' + m[1] + '</option>').join('') + '</select></span>').join('') + '</div>' +
+    '<div class="bulk-row"><input id="bulkAmt" data-keep type="number" min="0" placeholder="amount" data-enter="bulkDamage">' +
+    '<button class="btn danger small" data-act="bulkDamage">Apply damage</button><button class="btn small" data-act="bulkHeal">Heal all</button>' +
+    '<input id="bulkCond" data-keep list="condList" placeholder="condition"><input id="bulkDur" data-keep type="number" placeholder="rds"><button class="btn small" data-act="bulkCond">Add condition</button>' +
+    '<span class="spacer"></span><button class="btn small ghost" data-act="selNone">Clear selection</button></div>';
+}
+
+/* ---------- sidebar panes ---------- */
+function paneParty(){
+  const e = editingRoster ? roster.find(r => r.id === editingRoster) : null;
+  const inCombat = r => state.combatants.some(c => c.rosterId === r.id);
+  return '<div class="mini-form"><div class="fgrid">' +
+    '<div class="field span2"><label for="rp-name">Name</label><input id="rp-name" value="' + esc(e ? e.name : '') + '"></div>' +
+    '<div class="field"><label for="rp-lvl">Level</label><input id="rp-lvl" type="number" min="1" max="20" value="' + (e ? e.level : 1) + '"></div>' +
+    '<div class="field"><label for="rp-ac">AC</label><input id="rp-ac" type="number" value="' + (e ? e.ac : '') + '"></div>' +
+    '<div class="field"><label for="rp-hp">Max HP</label><input id="rp-hp" type="number" value="' + (e ? e.hpMax : '') + '"></div>' +
+    '<div class="field"><label for="rp-dex">DEX mod</label><input id="rp-dex" type="number" value="' + (e ? e.dex : '') + '"></div>' +
+    '<div class="field"><label for="rp-pp">Passive Perc.</label><input id="rp-pp" type="number" value="' + (e && e.pp != null ? e.pp : '') + '"></div>' +
+    '<div class="field"><label for="rp-dc">Spell DC</label><input id="rp-dc" type="number" value="' + (e && e.dc != null ? e.dc : '') + '"></div></div>' +
+    '<div class="actions-row"><button class="btn primary" data-act="rpSave">' + (e ? 'Update PC' : 'Save PC') + '</button>' + (e ? '<button class="btn" data-act="rpCancel">Cancel</button>' : '') + '</div></div>' +
+    (roster.length ? '<h3 class="sh">Add to combat</h3><table class="addparty">' + roster.map(r => {
+      const here = inCombat(r);
+      return '<tr><td><input type="checkbox" id="pc-' + r.id + '" data-keep ' + (here ? 'disabled' : 'checked') + '></td><td><b>' + esc(r.name) + '</b><div style="font-size:11px;color:var(--ivory-dim)">Lv ' + r.level + ' · AC ' + r.ac +
+        ' · HP ' + (r.hpCur != null ? r.hpCur : r.hpMax) + '/' + r.hpMax + (r.pp != null ? ' · PP ' + r.pp : '') + (r.dc != null ? ' · DC ' + r.dc : '') + '</div></td>' +
+        '<td>' + (here ? '<span class="chip">in combat</span>' : '<input type="number" id="pi-' + r.id + '" data-keep placeholder="init" title="Initiative (blank = roll)">') + '</td></tr>';
+    }).join('') + '</table><div class="actions-row" style="margin-top:8px"><button class="btn primary" data-act="addParty">Add checked PCs</button><button class="btn" data-act="longRest" title="Restore every PC to full HP">Long rest</button></div>' +
+    '<h3 class="sh">Roster</h3>' + roster.map(r => '<div class="trow" data-rid="' + r.id + '"><div class="tinfo"><b>' + esc(r.name) + '</b><span>Lv ' + r.level + ' · AC ' + r.ac + ' · HP ' + r.hpMax + ' · DEX ' + signed(r.dex) +
+      '</span></div><div class="tbtns"><button class="btn small" data-act="rpEdit">✎</button><button class="btn small danger" data-act="rpDel">✕</button></div></div>').join('') :
+    '<div class="hint">Save each PC once, then add the whole party to a fight with one click. Current HP carries over between fights.</div>');
+}
+function paneBestiary(){
+  const e = editingTpl ? templates.find(t => t.id === editingTpl) : null;
+  return '<div class="mini-form"><div class="fgrid">' +
+    '<div class="field span2"><label for="tp-name">Name</label><input id="tp-name" value="' + esc(e ? e.name : '') + '"></div>' +
+    '<div class="field"><label for="tp-ac">AC</label><input id="tp-ac" type="number" value="' + (e && e.ac != null ? e.ac : '') + '"></div>' +
+    '<div class="field"><label for="tp-hp">HP / dice</label><input id="tp-hp" value="' + esc(e ? e.hp : '') + '" placeholder="5d8+10"></div>' +
+    '<div class="field"><label for="tp-dex">DEX mod</label><input id="tp-dex" type="number" value="' + (e ? e.dex : '') + '"></div>' +
+    '<div class="field"><label for="tp-cr">CR</label><input id="tp-cr" value="' + esc(e ? e.cr : '') + '" placeholder="1/4"></div>' +
+    '<div class="field"><label for="tp-leg">Legendary</label><input id="tp-leg" type="number" value="' + (e ? e.legendaryMax : 0) + '"></div>' +
+    '<div class="field span2"><label for="tp-rch">Recharge</label><input id="tp-rch" value="' + esc(e ? rchStr(e.recharges) : '') + '" placeholder="Fire Breath 5"></div>' +
+    '<div class="field span3"><label for="tp-notes">Notes</label><input id="tp-notes" value="' + esc(e ? e.notes : '') + '"></div></div>' +
+    '<div class="actions-row"><button class="btn primary" data-act="tpSave">' + (e ? 'Update template' : 'Save template') + '</button>' + (e ? '<button class="btn" data-act="tpCancel">Cancel</button>' : '') + '</div></div>' +
+    '<div class="checks"><div class="field" style="flex-direction:row;align-items:center;gap:8px"><label for="tq" style="margin:0">Quantity</label><input id="tq" data-keep type="number" min="1" value="1" style="width:70px"></div>' +
+    '<label class="tog"><input type="checkbox" id="tRoll" data-keep checked> Roll HP from dice</label><label class="tog"><input type="checkbox" id="tHid" data-keep> Start hidden</label>' +
+    '<label class="tog"><input type="checkbox" id="tGrp" data-keep> Same initiative for the group</label></div>' +
+    (templates.length ? templates.map(t => {
+      const p = parseDice(t.hp), xp = CR_XP[t.cr.trim()];
+      return '<div class="trow" data-tid="' + t.id + '"><div class="tinfo"><b>' + esc(t.name) + '</b><span>AC ' + (t.ac != null ? t.ac : '—') + ' · HP ' + esc(t.hp) + (p ? ' (avg ' + diceAvg(p) + ')' : '') + ' · DEX ' + signed(t.dex) +
+        (t.cr ? ' · CR ' + esc(t.cr) + (xp != null ? ' (' + xp + ' XP)' : '') : '') + '</span></div><div class="tbtns"><button class="btn small primary" data-act="tpAdd">Add</button>' +
+        '<button class="btn small" data-act="tpEdit">✎</button><button class="btn small danger" data-act="tpDel">✕</button></div></div>';
+    }).join('') : '<div class="hint">No templates yet. Save one from the Add tab or from a monster card.</div>') +
+    '<div class="hint">Starter stats come from the 2014 Monster Manual. Check them against your book and edit freely.</div>';
+}
+function paneEnc(){
+  const s = encStats();
+  return '<div class="fgrid"><div class="field"><label for="encSize">Party size</label><input id="encSize" data-keep data-change="enc" type="number" min="1" max="12" value="' + s.size + '"></div>' +
+    '<div class="field"><label for="encLvl">Party level</label><input id="encLvl" data-keep data-change="enc" type="number" min="1" max="20" value="' + s.lvl + '"></div>' +
+    '<div class="field"><label>&nbsp;</label><button class="btn small" data-act="encFromRoster">From roster</button></div></div>' +
+    '<div class="thr"><div>Easy<b>' + s.thr.easy + '</b></div><div>Medium<b>' + s.thr.medium + '</b></div><div>Hard<b>' + s.thr.hard + '</b></div><div>Deadly<b>' + s.thr.deadly + '</b></div></div>' +
+    '<div class="diff ' + (s.label === '—' ? 'Trivial' : s.label) + '">' + s.label + '</div>' +
+    '<div class="kv"><span>Monsters in this fight</span><b>' + s.mons + '</b></div><div class="kv"><span>Base XP</span><b>' + s.base + '</b></div>' +
+    '<div class="kv"><span>Group multiplier</span><b>×' + s.mult + '</b></div><div class="kv"><span>Adjusted XP</span><b>' + s.adj + '</b></div>' +
+    '<h3 class="sh">XP earned</h3><div class="kv"><span>Defeated so far</span><b>' + s.earned + '</b></div><div class="kv"><span>Per PC (' + s.pcs + ')</span><b>' + s.share + '</b></div>' +
+    (s.noXp ? '<div class="hint">' + s.noXp + ' monster(s) have no CR set, so they count as 0 XP.</div>' : '') +
+    '<div class="hint">Uses the 2014 DMG thresholds and group-size multipliers. The multiplier shifts up for parties under 3 and down for parties of 6 or more.</div>';
+}
+function logText(){ return state.log.slice().reverse().map(e => '[R' + e.r + ' ' + fmtClock(e.t) + '] ' + e.msg).join('\n'); }
+function paneLog(){
+  const fights = state.fights.map((f, i) => '<div class="log-entry"><span class="t">Fight ' + (i + 1) + '</span>' + f.rounds + ' round(s) · ' + fmtDur(f.ms) + ' · ' + f.xp + ' XP</div>').join('') || '<div class="hint">No finished fights yet this session.</div>';
+  return '<div class="actions-row"><button class="btn small" data-act="logExport">Export .txt</button><button class="btn small" data-act="logCopy">Copy</button></div>' +
+    '<h3 class="sh">Fights this session</h3>' + fights + '<h3 class="sh">Combat log</h3><div class="log-list">' +
+    (state.log.map(e => '<div class="log-entry"><span class="t">R' + e.r + ' · ' + fmtClock(e.t) + '</span>' + esc(e.msg) + '</div>').join('') || '<div class="hint">Nothing yet.</div>') + '</div>';
+}
+function setTab(t){
+  activeTab = t;
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + t));
+  if(t === 'party') $('#pane-party').innerHTML = paneParty();
+  if(t === 'bestiary') $('#pane-bestiary').innerHTML = paneBestiary();
+  if(t === 'enc') $('#pane-enc').innerHTML = paneEnc();
+  if(t === 'log') $('#pane-log').innerHTML = paneLog();
+}
+
+/* =====================================================================
+   Player sync
+   ===================================================================== */
+function playerSnapshot(){
+  const s = state, arr = s.combatants, cur = getCurrent(), vis = c => c.type !== 'lair' && !c.hidden;
+  let nextId = null;
+  if(cur){ const i = arr.indexOf(cur); for(let k = 1; k < arr.length; k++){ const c = arr[(i + k) % arr.length]; if(vis(c) && !skippable(c)){ nextId = c.id; break; } } }
+  const list = arr.filter(vis).map(c => {
+    const pct = c.hpMax > 0 ? clamp(c.hpCur / c.hpMax, 0, 1) : 1, down = isDefeated(c), dead = isDead(c);
+    const stable = c.type === 'pc' && down && c.deathSuccess >= 3, nums = c.type === 'pc' ? s.settings.pvPcNums : s.settings.pvMonNums;
+    let label;
+    if(dead) label = 'DEAD'; else if(stable) label = 'STABLE'; else if(down) label = c.type === 'pc' ? 'DOWN' : 'DEFEATED';
+    else if(nums) label = c.hpCur + ' / ' + c.hpMax + ' HP'; else label = hpBucket(pct);
+    return {id:c.id, name:c.name, type:c.type, pct, label, down, dead, conds:c.conditions.map(x => x.name), conc:c.concentrating, cur:!!cur && cur.id === c.id, next:c.id === nextId};
+  });
+  return {v:1, round:s.round, started:s.started, layout:s.settings.pvLayout, flash:s.settings.flash, turnSeq:s.turnSeq,
+    currentHidden:!!cur && !vis(cur), curName:cur && vis(cur) ? cur.name : null,
+    timer:s.settings.showTimer && s.settings.turnTimerSec > 0 && s.started && s.turnStartedAt ? {sec:s.settings.turnTimerSec, start:s.turnStartedAt, paused:s.turnPausedAt} : null, list};
+}
+function broadcast(){
+  const snap = playerSnapshot(); lsSet(KEY.pv, snap);
+  const open = playerWin && !playerWin.closed;
+  if(open){ try{ playerWin.postMessage({type:'sync', snap}, '*'); }catch(e){} }
+  const st = $('#pvStatus'); if(st){ st.textContent = open ? 'live' : 'not open'; st.classList.toggle('live', !!open); }
+}
+function openPlayer(){
+  const ribbon = state.settings.pvLayout === 'ribbon', feat = ribbon ? 'width=1600,height=190' : 'width=1400,height=900';
+  if(playerWin && !playerWin.closed){ try{ playerWin.focus(); }catch(e){} return; }
+  const u = new URL(location.href); u.searchParams.set('player', '1'); u.hash = '';
+  playerWin = window.open(u.toString(), 'tombTrackerPlayerView', feat);
+  if(!playerWin){ notify('The browser blocked the popup. Allow popups for this page and try again.', {kind:'bad'}); return; }
+  setTimeout(broadcast, 500); setTimeout(broadcast, 1500);
+}
+
+/* =====================================================================
+   Clocks
+   ===================================================================== */
+function tickClock(){
+  const now = Date.now();
+  $('#sessClock').textContent = fmtDur(now - state.session.start);
+  $('#fightClock').textContent = state.combatStartedAt ? fmtDur(now - state.combatStartedAt) : '—';
+  const box = $('#turnBox'), tc = $('#turnClock');
+  if(state.started && state.turnStartedAt){
+    const el = (state.turnPausedAt || now) - state.turnStartedAt, lim = state.settings.turnTimerSec * 1000;
+    if(lim > 0){
+      const left = lim - el; tc.textContent = fmtDur(Math.max(0, left)); box.classList.toggle('warn', left <= 10000);
+      if(left <= 0 && !state.turnPausedAt && buzzedSeq !== state.turnSeq){
+        buzzedSeq = state.turnSeq; chime('buzz'); const c = getCurrent(); notify('Time\'s up for <b>' + esc(c ? c.name : 'this turn') + '</b>.', {kind:'warn', ttl:6000});
+      }
+    } else { tc.textContent = fmtDur(el); box.classList.remove('warn'); }
+  } else { tc.textContent = '—'; box.classList.remove('warn'); }
+}
+
+/* =====================================================================
+   Actions
+   ===================================================================== */
+const cardId = el => { const c = el.closest('[data-id]'); return c ? +c.dataset.id : null; };
+const rowId = (el, a) => { const r = el.closest('[data-' + a + ']'); return r ? r.dataset[a] : null; };
+function download(name, text, type){
+  const blob = new Blob([text], {type:type || 'text/plain'}), url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+function readAddForm(){
+  const v = id => $('#' + id).value;
+  const type = v('fType'), name = v('fName').trim() || (type === 'lair' ? 'Lair action' : '');
+  return {name, type, init:v('fInit') === '' ? null : num(v('fInit'), null), dex:num(v('fDex'), 0), ac:v('fAC') === '' ? null : num(v('fAC'), null),
+    hp:v('fHP').trim() || '1', cr:v('fCR').trim(), legendaryMax:Math.max(0, num(v('fLeg'), 0)), recharges:parseRch(v('fRch')), notes:v('fNotes').trim()};
+}
+function endModal(){
+  const s = encStats(), dur = state.combatStartedAt ? fmtDur(Date.now() - state.combatStartedAt) : '—';
+  openModal('<h2>End combat</h2><div class="kv"><span>Rounds</span><b>' + state.round + '</b></div><div class="kv"><span>Duration</span><b>' + dur + '</b></div>' +
+    '<div class="kv"><span>XP earned (defeated monsters)</span><b>' + s.earned + '</b></div><div class="kv"><span>Per PC (' + s.pcs + ')</span><b>' + s.share + '</b></div>' +
+    '<div class="hint">PC hit points are saved back to the roster so they carry into the next fight.</div>' +
+    '<div class="actions-row" style="margin-top:16px"><button class="btn primary" data-act="finish" data-mode="monsters">Clear monsters, keep party</button>' +
+    '<button class="btn" data-act="finish" data-mode="all">Clear everyone</button><button class="btn" data-act="finish" data-mode="keep">Keep the list</button>' +
+    '<button class="btn ghost" data-act="closeModal">Cancel</button></div>');
+}
+function finishCombat(mode){
+  closeModal();
+  mutate('End combat', () => {
+    const now = Date.now(), ms = state.combatStartedAt ? now - state.combatStartedAt : 0, st = encStats();
+    state.fights.push({rounds:state.round, ms, xp:st.earned, at:now});
+    state.combatants.filter(c => c.type === 'pc' && c.rosterId).forEach(c => { const r = roster.find(x => x.id === c.rosterId); if(r) r.hpCur = c.hpCur; });
+    saveRoster();
+    addLog('Combat ended after ' + state.round + ' round(s), ' + fmtDur(ms) + ', ' + st.earned + ' XP');
+    state.started = false; state.currentId = null; state.round = 1; state.xpEarned = 0; state.combatStartedAt = null; state.turnStartedAt = null; state.turnPausedAt = null;
+    if(mode === 'monsters') state.combatants = state.combatants.filter(c => c.type === 'pc' || c.type === 'npc');
+    if(mode === 'all') state.combatants = [];
+    state.combatants.forEach(c => { c.reactionUsed = false; c.legendaryUsed = 0; c.conditions = c.conditions.filter(x => x.duration == null); });
+    selected.clear();
+  });
+}
+
+const actions = {
+  next:() => nextTurn(), prev:() => prevTurn(), undo:() => undo(), redo:() => redo(), pause:togglePause, openPlayer,
+  endCombat:endModal, closeModal, finish:el => finishCombat(el.dataset.mode),
+  tab:el => setTab(el.dataset.tab),
+  export:() => {
+    download('tomb-tracker-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json',
+      JSON.stringify({app:'tomb-tracker', version:2, state, roster, templates}, null, 2), 'application/json');
+  },
+  clearAll:() => {
+    if(!confirm('Clear all combatants, the round counter and the log? You can undo this with Ctrl+Z.')) return;
+    mutate('Clear all', () => { Object.assign(state, {combatants:[], log:[], round:1, started:false, currentId:null, xpEarned:0, combatStartedAt:null, turnStartedAt:null, turnPausedAt:null}); selected.clear(); });
+  },
+  resetSession:() => { state.session = {start:Date.now(), last:Date.now()}; save(); tickClock(); },
+  resort:() => mutate('Re-sort', () => state.combatants.sort(cmp)),
+  clearDefeated:() => mutate('Clear defeated', () => {
+    state.combatants.filter(c => c.type !== 'pc' && c.type !== 'lair' && isDefeated(c)).forEach(c => removeCombatant(c.id));
+  }),
+  selMonsters:() => { state.combatants.filter(c => c.type === 'monster').forEach(c => selected.add(c.id)); render(); },
+  selNone:() => { selected.clear(); render(); },
+
+  /* add pane */
+  rollInit:() => { $('#fInit').value = d(20) + num($('#fDex').value, 0); },
+  add:() => {
+    const spec = readAddForm(); if(!spec.name){ $('#fName').focus(); return; }
+    const qty = clamp(num($('#fQty').value, 1), 1, 40);
+    const opts = {rollHp:$('#fRollHp').checked, hidden:$('#fHidden').checked, groupInit:$('#fGroup').checked};
+    mutate('Add ' + spec.name, () => { spec.xp = CR_XP[spec.cr] || 0; addCombatants(spec, qty, opts); });
+    ['fName', 'fInit', 'fAC', 'fHP', 'fCR', 'fRch', 'fNotes'].forEach(i => { $('#' + i).value = ''; }); $('#fQty').value = '1';
+    $('#fName').focus();
+  },
+  saveTplForm:() => {
+    const s = readAddForm(); if(!s.name || s.type === 'lair'){ notify('Give the monster a name first.', {kind:'warn', ttl:3000}); return; }
+    templates.push(normalizeTpl({name:s.name.replace(/\s+\d+$/, ''), ac:s.ac, hp:s.hp, dex:s.dex, cr:s.cr, legendaryMax:s.legendaryMax, recharges:s.recharges, notes:s.notes}));
+    saveTemplates(); notify('Saved “' + esc(s.name) + '” to the Bestiary.', {ttl:3000}); if(activeTab === 'bestiary') setTab('bestiary');
+  },
+
+  /* card actions */
+  dmg:el => { const id = cardId(el), inp = $('#amt-' + id), n = num((inp.value.match(/\d+/) || [])[0], 0); if(!n) return; inp.value = ''; runHp(id, {kind:'dmg', n}); },
+  heal:el => { const id = cardId(el), inp = $('#amt-' + id), n = num((inp.value.match(/\d+/) || [])[0], 0); if(!n) return; inp.value = ''; runHp(id, {kind:'heal', n}); },
+  hpcmd:el => {
+    const id = cardId(el), cmd = parseHpCommand(el.value);
+    if(!cmd){ if(el.value.trim()) notify('Couldn\'t read “' + esc(el.value) + '”. Try -12, +5, t8 or =20.', {kind:'warn', ttl:4000}); return; }
+    el.value = ''; runHp(id, cmd);
+  },
+  conc:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': concentration', () => { c.concentrating = !c.concentrating; addLog(c.name + (c.concentrating ? ' starts concentrating' : ' stops concentrating')); }); },
+  rmcond:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': remove condition', () => { c.conditions = c.conditions.filter(x => x.name !== el.dataset.cond); }); },
+  addcond:el => {
+    const id = cardId(el), c = findById(id), inp = $('#cin-' + id), dur = $('#cdur-' + id); if(!c || !inp || !inp.value.trim()) return;
+    const name = inp.value, dv = dur.value === '' ? null : num(dur.value, null); inp.value = ''; dur.value = '';
+    mutate(c.name + ': add condition', () => addCondition(c, name, dv));
+  },
+  react:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': reaction', () => { c.reactionUsed = !c.reactionUsed; }); },
+  legpip:el => {
+    const c = findById(cardId(el)); if(!c) return; const i = +el.dataset.idx;
+    mutate(c.name + ': legendary action', () => {
+      const avail = c.legendaryMax - c.legendaryUsed;
+      c.legendaryUsed = clamp(c.legendaryUsed + (i < avail ? 1 : -1), 0, c.legendaryMax);
+    });
+  },
+  rch:el => {
+    const c = findById(cardId(el)); if(!c) return; const r = c.recharges[+el.dataset.idx]; if(!r) return;
+    if(r.ready) mutate(c.name + ': ' + r.name + ' used', () => { r.ready = false; addLog(c.name + ' uses ' + r.name); });
+    else rollRecharge(c.id, r.name);
+  },
+  ds:el => { const c = findById(cardId(el)); if(!c) return; const key = el.dataset.kind === 'success' ? 'deathSuccess' : 'deathFail', i = +el.dataset.idx;
+    mutate(c.name + ': death saves', () => { c[key] = c[key] === i + 1 ? i : i + 1; if(c.deathSuccess >= 3) addLog(c.name + ' stabilizes'); if(c.deathFail >= 3) addLog(c.name + ' has died'); }); },
+  dsAdd:el => { const c = findById(cardId(el)); if(!c) return; const key = el.dataset.kind === 'success' ? 'deathSuccess' : 'deathFail';
+    mutate(c.name + ': death save', () => { c[key] = Math.min(3, c[key] + 1); addLog(c.name + ' death save ' + (key === 'deathSuccess' ? 'success' : 'failure') + ' (' + c[key] + '/3)'); if(c.deathSuccess >= 3) addLog(c.name + ' stabilizes'); if(c.deathFail >= 3) addLog(c.name + ' has died'); }); },
+  nat20:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': natural 20', () => { c.hpCur = 1; c.deathSuccess = 0; c.deathFail = 0; addLog(c.name + ' rolls a natural 20 and regains 1 HP'); }); },
+  nat1:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': natural 1', () => { c.deathFail = Math.min(3, c.deathFail + 2); addLog(c.name + ' rolls a natural 1 — 2 failures (' + c.deathFail + '/3)'); if(c.deathFail >= 3) addLog(c.name + ' has died'); }); },
+  hide:el => { const c = findById(cardId(el)); if(!c) return; mutate(c.name + ': ' + (c.hidden ? 'reveal' : 'hide'), () => { c.hidden = !c.hidden; addLog(c.name + (c.hidden ? ' is hidden from players' : ' is revealed to players')); }); },
+  savetpl:el => {
+    const c = findById(cardId(el)); if(!c) return;
+    templates.push(normalizeTpl({name:c.name.replace(/\s+\d+$/, ''), ac:c.ac, hp:String(c.hpMax), dex:c.dex, cr:c.cr, legendaryMax:c.legendaryMax, recharges:c.recharges.map(r => ({name:r.name, min:r.min})), notes:c.notes}));
+    saveTemplates(); notify('Saved “' + esc(c.name.replace(/\s+\d+$/, '')) + '” to the Bestiary.', {ttl:3000}); if(activeTab === 'bestiary') setTab('bestiary');
+  },
+  remove:el => { const id = cardId(el); const c = findById(id); if(!c) return; mutate('Remove ' + c.name, () => removeCombatant(id)); },
+  editnote:el => { editingNote = cardId(el); render(); },
+  note:el => {
+    const id = cardId(el), c = findById(id); editingNote = null; if(!c){ render(); return; }
+    const v = el.value.trim(); if(v === c.notes){ render(); return; }
+    mutate(c.name + ': note', () => { c.notes = v; });
+  },
+
+  /* group actions */
+  bulkDamage:() => {
+    const amt = num($('#bulkAmt').value, 0); if(!amt) return;
+    const targets = Array.from(selected).map(findById).filter(Boolean);
+    $('#bulkAmt').value = '';
+    mutate('Group damage ' + amt, () => {
+      addLog('Group damage: ' + amt + ' to ' + targets.length + ' target(s)');
+      targets.forEach(c => { const m = bulkModes[c.id] || 'full', dmg = m === 'half' ? Math.floor(amt / 2) : m === 'double' ? amt * 2 : m === 'none' ? 0 : amt; applyDamage(c, dmg); });
+    });
+  },
+  bulkHeal:() => {
+    const amt = num($('#bulkAmt').value, 0); if(!amt) return;
+    const targets = Array.from(selected).map(findById).filter(Boolean);
+    $('#bulkAmt').value = '';
+    mutate('Group heal ' + amt, () => targets.forEach(c => applyHeal(c, amt)));
+  },
+  bulkCond:() => {
+    const name = $('#bulkCond').value.trim(); if(!name) return; const dur = $('#bulkDur').value === '' ? null : num($('#bulkDur').value, null);
+    const targets = Array.from(selected).map(findById).filter(Boolean);
+    $('#bulkCond').value = ''; $('#bulkDur').value = '';
+    mutate('Group condition', () => targets.forEach(c => addCondition(c, name, dur)));
+  },
+
+  /* roster */
+  rpSave:() => {
+    const name = $('#rp-name').value.trim(); if(!name){ $('#rp-name').focus(); return; }
+    const old = editingRoster ? roster.find(r => r.id === editingRoster) : null, hpMax = Math.max(1, num($('#rp-hp').value, 1));
+    const r = normalizeRoster({id:old ? old.id : uid(), name, level:$('#rp-lvl').value, ac:$('#rp-ac').value, hpMax, dex:$('#rp-dex').value, pp:$('#rp-pp').value, dc:$('#rp-dc').value, hpCur:old && old.hpCur != null ? Math.min(old.hpCur, hpMax) : null});
+    if(old) roster[roster.indexOf(old)] = r; else roster.push(r);
+    editingRoster = null; saveRoster(); setTab('party');
+  },
+  rpEdit:el => { editingRoster = rowId(el, 'rid'); setTab('party'); },
+  rpCancel:() => { editingRoster = null; setTab('party'); },
+  rpDel:el => { const id = rowId(el, 'rid'), r = roster.find(x => x.id === id); if(!r || !confirm('Remove ' + r.name + ' from the roster?')) return; roster = roster.filter(x => x.id !== id); saveRoster(); setTab('party'); },
+  addParty:() => {
+    const picks = roster.filter(r => { const cb = $('#pc-' + r.id); return cb && cb.checked && !cb.disabled; });
+    if(!picks.length){ notify('Tick at least one PC to add.', {kind:'warn', ttl:3000}); return; }
+    mutate('Add party', () => picks.forEach(r => {
+      const iv = $('#pi-' + r.id);
+      addCombatants({name:r.name, type:'pc', init:iv && iv.value !== '' ? num(iv.value, null) : null, dex:r.dex, ac:r.ac, hp:r.hpMax, hpCur:r.hpCur != null ? r.hpCur : null, pp:r.pp, dc:r.dc, rosterId:r.id}, 1, {});
+    }));
+    setTab('party');
+  },
+  longRest:() => {
+    if(!confirm('Restore every PC to full HP?')) return;
+    mutate('Long rest', () => {
+      roster.forEach(r => { r.hpCur = r.hpMax; });
+      state.combatants.filter(c => c.type === 'pc').forEach(c => { c.hpCur = c.hpMax; c.tempHp = 0; c.deathSuccess = 0; c.deathFail = 0; });
+      addLog('Long rest — party restored to full HP');
+    });
+    saveRoster(); setTab('party');
+  },
+
+  /* bestiary */
+  tpSave:() => {
+    const name = $('#tp-name').value.trim(); if(!name){ $('#tp-name').focus(); return; }
+    const old = editingTpl ? templates.find(t => t.id === editingTpl) : null;
+    const t = normalizeTpl({id:old ? old.id : uid(), name, ac:$('#tp-ac').value, hp:$('#tp-hp').value || '1', dex:$('#tp-dex').value, cr:$('#tp-cr').value.trim(), legendaryMax:$('#tp-leg').value, recharges:parseRch($('#tp-rch').value), notes:$('#tp-notes').value});
+    if(old) templates[templates.indexOf(old)] = t; else templates.push(t);
+    editingTpl = null; saveTemplates(); setTab('bestiary');
+  },
+  tpEdit:el => { editingTpl = rowId(el, 'tid'); setTab('bestiary'); },
+  tpCancel:() => { editingTpl = null; setTab('bestiary'); },
+  tpDel:el => { const id = rowId(el, 'tid'), t = templates.find(x => x.id === id); if(!t || !confirm('Delete the “' + t.name + '” template?')) return; templates = templates.filter(x => x.id !== id); saveTemplates(); setTab('bestiary'); },
+  tpAdd:el => {
+    const t = templates.find(x => x.id === rowId(el, 'tid')); if(!t) return;
+    const qty = clamp(num($('#tq').value, 1), 1, 40), opts = {rollHp:$('#tRoll').checked, hidden:$('#tHid').checked, groupInit:$('#tGrp').checked};
+    mutate('Add ' + t.name, () => addCombatants({name:t.name, type:'monster', init:null, dex:t.dex, ac:t.ac, hp:t.hp, cr:t.cr, xp:CR_XP[t.cr.trim()] || 0, legendaryMax:t.legendaryMax, recharges:t.recharges, notes:t.notes}, qty, opts));
+  },
+  encFromRoster:() => {
+    if(!roster.length){ notify('Add PCs to the Party tab first.', {kind:'warn', ttl:3000}); return; }
+    state.settings.partySize = roster.length; state.settings.partyLevel = clamp(Math.round(roster.reduce((s, r) => s + r.level, 0) / roster.length), 1, 20); save(); render();
+  },
+  logExport:() => download('combat-log-' + new Date().toISOString().slice(0, 10) + '.txt', logText()),
+  logCopy:() => {
+    const t = logText(), ok = () => notify('Log copied.', {ttl:2000});
+    try{ navigator.clipboard.writeText(t).then(ok, () => download('combat-log.txt', t)); }catch(e){ download('combat-log.txt', t); }
+  }
+};
+
+const changes = {
+  init:el => { const c = findById(cardId(el)); if(!c) return; const v = num(el.value, c.init); mutate(c.name + ': initiative', () => { state.combatants.splice(state.combatants.indexOf(c), 1); c.init = v; insertSorted(c); }); },
+  select:el => { const id = cardId(el); if(el.checked) selected.add(id); else selected.delete(id); render(); },
+  bulkmode:el => { const r = el.closest('[data-id]'); bulkModes[+r.dataset.id] = el.value; },
+  note:el => actions.note(el),
+  enc:() => { state.settings.partySize = clamp(num($('#encSize').value, 4), 1, 12); state.settings.partyLevel = clamp(num($('#encLvl').value, 1), 1, 20); save(); render(); }
+};
+
+/* =====================================================================
+   Wiring
+   ===================================================================== */
+const SET_BIND = [['optSkip', 'skipDefeated', 'c'], ['optFlash', 'flash', 'c'], ['optChime', 'chime', 'c'], ['optShowTimer', 'showTimer', 'c'], ['optTimerSec', 'turnTimerSec', 'n'],
+  ['pvPcNums', 'pvPcNums', 'c'], ['pvMonNums', 'pvMonNums', 'c'], ['pvLayout', 'pvLayout', 's']];
+function syncSettingsUI(){
+  SET_BIND.forEach(b => { const el = $('#' + b[0]); if(b[2] === 'c') el.checked = !!state.settings[b[1]]; else el.value = state.settings[b[1]]; });
+}
+function bindSettings(){
+  SET_BIND.forEach(b => {
+    const el = $('#' + b[0]), key = b[1], kind = b[2];
+    el.addEventListener('change', () => {
+      state.settings[key] = kind === 'c' ? el.checked : kind === 'n' ? Math.max(0, num(el.value, 0)) : el.value;
+      if(key === 'pvLayout' && playerWin && !playerWin.closed){ try{ playerWin.resizeTo.apply(playerWin, el.value === 'ribbon' ? [1600, 190] : [1400, 900]); }catch(e){} }
+      if(key === 'turnTimerSec') buzzedSeq = -1;
+      save(); broadcast(); renderHeader();
+    });
+  });
+}
+function initDM(){
+  loadAll();
+  $('#condList').innerHTML = Object.keys(COND_INFO).concat(EXTRA_EFFECTS).map(x => '<option value="' + esc(x) + '">').join('');
+  syncSettingsUI(); bindSettings();
+
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-act]'); if(!el) return;
+    const fn = actions[el.dataset.act]; if(!fn) return;
+    fn(el, e); if(el.tagName === 'BUTTON' && document.body.contains(el)) el.blur();
+  });
+  document.addEventListener('change', e => { const el = e.target.closest('[data-change]'); if(el && changes[el.dataset.change]) changes[el.dataset.change](el, e); });
+  document.addEventListener('keydown', e => {
+    const en = e.target.closest && e.target.closest('[data-enter]');
+    if(en && e.key === 'Enter'){ e.preventDefault(); const f = actions[en.dataset.enter]; if(f) f(en, e); return; }
+    if(e.target.closest && e.target.closest('#pane-add') && e.key === 'Enter' && e.target.tagName === 'INPUT'){ e.preventDefault(); actions.add(); return; }
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    const typing = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(tag) || (document.activeElement && document.activeElement.isContentEditable);
+    if(e.key === 'Escape'){ if($('#modal').classList.contains('open')) closeModal(); else if(selected.size){ selected.clear(); render(); } return; }
+    if(typing) return;
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey){ e.preventDefault(); undo(); return; }
+    if((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))){ e.preventDefault(); redo(); return; }
+    if(e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); nextTurn(); }
+  });
+  $('#modal').addEventListener('click', e => { if(e.target.id === 'modal') closeModal(); });
+  $('#importFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return; const rd = new FileReader();
+    rd.onload = () => {
+      try{
+        const data = JSON.parse(rd.result), raw = data.state || data;
+        if(!raw.combatants) throw new Error('bad file');
+        pushUndo('Import file'); state = normalizeState(raw);
+        if(Array.isArray(data.roster)) roster = data.roster.map(normalizeRoster);
+        if(Array.isArray(data.templates)) templates = data.templates.map(normalizeTpl);
+        saveRoster(); saveTemplates(); selected.clear(); syncSettingsUI(); addLog('Imported from file'); afterChange(); setTab(activeTab);
+        notify('Imported ' + state.combatants.length + ' combatants.', {ttl:4000});
+      }catch(err){ notify('Couldn\'t read that file. Is it a Tomb Tracker export?', {kind:'bad'}); }
+    };
+    rd.readAsText(f); e.target.value = '';
+  });
+
+  /* drag to reorder */
+  const lw = $('#listWrap');
+  const clearDrop = () => $$('.drop-before,.drop-after', lw).forEach(x => x.classList.remove('drop-before', 'drop-after'));
+  lw.addEventListener('dragstart', e => {
+    const h = e.target.closest && e.target.closest('[data-drag]'); if(!h){ return; }
+    const card = h.closest('.combatant'); dragId = +card.dataset.id; card.classList.add('dragging');
+    try{ e.dataTransfer.setData('text/plain', String(dragId)); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setDragImage(card, 16, 16); }catch(err){}
+  });
+  lw.addEventListener('dragover', e => {
+    if(dragId == null) return; const card = e.target.closest('.combatant'); if(!card) return; e.preventDefault();
+    clearDrop(); const r = card.getBoundingClientRect(); card.classList.add(e.clientY > r.top + r.height / 2 ? 'drop-after' : 'drop-before');
+  });
+  lw.addEventListener('drop', e => {
+    if(dragId == null) return; const card = e.target.closest('.combatant'); e.preventDefault(); clearDrop(); if(!card){ dragId = null; return; }
+    const r = card.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2, from = dragId, to = +card.dataset.id; dragId = null;
+    const c = findById(from); if(c) mutate(c.name + ': reorder', () => { reorder(from, to, after); addLog(c.name + ' moves in the initiative order (now ' + c.init + ')'); });
+  });
+  lw.addEventListener('dragend', () => { dragId = null; clearDrop(); $$('.dragging', lw).forEach(x => x.classList.remove('dragging')); });
+
+  window.addEventListener('message', e => { if(e.data && e.data.type === 'request') broadcast(); });
+  window.addEventListener('beforeunload', save);
+  render(); save(); broadcast(); tickClock(); setInterval(tickClock, 500);
+  if(hadSaved && state.combatants.length) notify('Restored your last session: ' + state.combatants.length + ' combatants, round ' + state.round + '.', {ttl:7000});
+  window.__tt = {getState:() => state, getRoster:() => roster, getTemplates:() => templates, reorder:(id, t, a) => mutate('reorder', () => reorder(id, t, a)), playerSnapshot};
+}
+
+if(IS_PLAYER) initPlayer(); else initDM();
+})();
+</script>
+</body>
+</html>
